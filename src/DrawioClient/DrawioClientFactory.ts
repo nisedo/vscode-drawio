@@ -97,6 +97,7 @@ export class DrawioClientFactory {
 					libraries: simpleDrawioLibrary(libs),
 					zoomFactor: config.zoomFactor,
 					globalVars: config.globalVars,
+					sidebarWidth: 0,
 				};
 			},
 			() => {
