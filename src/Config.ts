@@ -293,7 +293,9 @@ export class DiagramConfig {
 		`${extensionId}.defaultEdgeStyle`,
 		{
 			scope: this.uri,
-			serializer: serializerWithDefault<Record<string, string>>({}),
+			serializer: serializerWithDefault<Record<string, string>>({
+				edgeStyle: "elbowEdgeStyle",
+			}),
 		}
 	);
 
