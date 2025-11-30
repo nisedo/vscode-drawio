@@ -30,11 +30,40 @@ declare const mxUtils: {
 	createXmlDocument(): XMLDocument;
 };
 
+// mxCellOverlay for visual indicators
+declare class mxCellOverlay {
+    constructor(image: mxImage, tooltip?: string, align?: string, verticalAlign?: string, offset?: mxPoint, cursor?: string);
+    align: string;
+    verticalAlign: string;
+    offset: mxPoint;
+}
+
+declare class mxImage {
+    constructor(src: string, width: number, height: number);
+}
+
+declare class mxPoint {
+    constructor(x: number, y: number);
+}
+
+declare const mxConstants: {
+    ALIGN_RIGHT: string;
+    ALIGN_TOP: string;
+    ALIGN_LEFT: string;
+    ALIGN_BOTTOM: string;
+    ALIGN_CENTER: string;
+};
+
+// mxPopupMenu for context menus
+declare class mxPopupMenu {
+    addItem(title: string, image: string | null, funct: () => void, parent?: any, iconCls?: string, enabled?: boolean): any;
+    addSeparator(parent?: any): void;
+}
 
 declare interface DrawioUI {
     fileNode: Element | null;
     hideDialog(): void;
-    showDialog(...args: any[]): void;
+    showDialog(div: HTMLElement, width: number, height: number, modal?: boolean, closable?: boolean, onClose?: () => void): void;
     editor: DrawioEditor;
     actions: DrawioActions;
     menus: DrawioMenus;
@@ -44,6 +73,7 @@ declare interface DrawioUI {
 interface DrawioMenus {
     get(name: string): any;
     addMenuItems(menu: any, arg: any, arg2: any): void;
+    createPopupMenu(menu: any, cell: DrawioCell | null, evt: Event): void;
 }
 
 interface DrawioActions {
@@ -63,6 +93,16 @@ declare interface DrawioGraph {
 	getLabel(cell: DrawioCell): string;
     getSelectionModel(): DrawioGraphSelectionModel;
     view: DrawioGraphView;
+    addCellOverlay(cell: DrawioCell, overlay: mxCellOverlay): mxCellOverlay;
+    removeCellOverlay(cell: DrawioCell, overlay?: mxCellOverlay): mxCellOverlay | null;
+    removeCellOverlays(cell: DrawioCell): mxCellOverlay[];
+    getCellOverlays(cell: DrawioCell): mxCellOverlay[] | null;
+    getTooltipForCell(cell: DrawioCell): string;
+    getSelectionCell(): DrawioCell | null;
+    getSelectionCells(): DrawioCell[];
+    popupMenuHandler: {
+        factoryMethod: (menu: any, cell: DrawioCell | null, evt: Event) => void;
+    };
 
     addMouseListener(listener: {
         mouseMove?: (graph: DrawioGraph, event: mxMouseEvent) => void;
@@ -87,7 +127,8 @@ declare interface DrawioGraphSelectionModel {
 
 declare interface DrawioCell {
     id: string;
-    style: string
+    style: string;
+    value: any;
 }
 
 declare interface DrawioGraphModel {
@@ -97,4 +138,6 @@ declare interface DrawioGraphModel {
 	cells: Record<any, DrawioCell>;
     setStyle(cell: DrawioCell, style: string): void;
     isVertex(cell: DrawioCell): boolean;
+    isEdge(cell: DrawioCell): boolean;
+    addListener(event: string, handler: (...args: any[]) => void): void;
 }

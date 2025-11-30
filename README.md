@@ -7,6 +7,7 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 - **Shapes panel closed by default** - Cleaner initial view without the left sidebar ([6969ffd](https://github.com/nisedo/vscode-drawio/commit/6969ffd))
 - **Grid and Page View settings** - New settings `hediet.vscode-drawio.enableGrid` and `hediet.vscode-drawio.enablePageView` ([c429580](https://github.com/nisedo/vscode-drawio/commit/c429580))
 - **Elbow edge style by default** - Orthogonal connectors for cleaner diagrams ([2a46a24](https://github.com/nisedo/vscode-drawio/commit/2a46a24))
+- **Google Sheets-style notes** - Right-click nodes to insert/edit/delete notes with tooltip display and visual indicator
 
 ## Install from Source
 
