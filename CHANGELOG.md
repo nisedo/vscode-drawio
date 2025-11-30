@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.0]
 
+### Added
+
+- New setting `hediet.vscode-drawio.enableGrid` to control whether the grid is enabled by default on new diagrams
+- New setting `hediet.vscode-drawio.enablePageView` to control whether page view is enabled by default on new diagrams
+
 ### Changed
 
 - Shapes panel (left sidebar) is now closed by default for a cleaner initial view (fixes [#484](https://github.com/hediet/vscode-drawio/issues/484))

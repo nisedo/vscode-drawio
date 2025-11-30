@@ -170,6 +170,16 @@ export interface DrawioConfig {
 	 * Set to 0 to hide the sidebar by default.
 	 */
 	sidebarWidth?: number;
+
+	/**
+	 * Specifies whether the page view is visible by default.
+	 */
+	defaultPageVisible?: boolean;
+
+	/**
+	 * Specifies whether the grid is enabled by default.
+	 */
+	defaultGridEnabled?: boolean;
 }
 
 export interface ColorScheme {

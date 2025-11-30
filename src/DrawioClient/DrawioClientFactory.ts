@@ -98,6 +98,8 @@ export class DrawioClientFactory {
 					zoomFactor: config.zoomFactor,
 					globalVars: config.globalVars,
 					sidebarWidth: 0,
+					defaultPageVisible: config.enablePageView,
+					defaultGridEnabled: config.enableGrid,
 				};
 			},
 			() => {
