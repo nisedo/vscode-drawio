@@ -104,7 +104,7 @@ This does not make much sense for SVG files though, as the draw.io diagram is st
 To build and install the extension from source:
 
 ```bash
-git clone --recurse-submodules https://github.com/hediet/vscode-drawio.git && cd vscode-drawio && yarn install && yarn build && code --install-extension ./dist/extension.vsix
+git clone --recurse-submodules https://github.com/nisedo/vscode-drawio.git && cd vscode-drawio && yarn install && yarn build && code --install-extension ./dist/extension.vsix
 ```
 
 Then reload VS Code to activate the extension.
