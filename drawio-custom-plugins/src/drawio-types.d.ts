@@ -85,9 +85,16 @@ declare interface DrawioEditor {
 	graph: DrawioGraph;
 }
 
+declare interface mxGeometry {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 declare interface DrawioGraph {
 	defaultThemeName: string;
-	insertVertex(arg0: undefined, arg1: null, label: string, arg3: number, arg4: number, arg5: number, arg6: number, arg7: string): void;
+	insertVertex(arg0: undefined, arg1: null, label: string, x: number, y: number, width: number, height: number, style: string): DrawioCell;
 	addListener: any;
 	model: DrawioGraphModel;
 	getLabel(cell: DrawioCell): string;
@@ -100,6 +107,7 @@ declare interface DrawioGraph {
     getTooltipForCell(cell: DrawioCell): string;
     getSelectionCell(): DrawioCell | null;
     getSelectionCells(): DrawioCell[];
+    getCellGeometry(cell: DrawioCell): mxGeometry | null;
     popupMenuHandler: {
         factoryMethod: (menu: any, cell: DrawioCell | null, evt: Event) => void;
     };

@@ -34,6 +34,8 @@ const linkWsSymbolWithSelectedNodeCommandName =
 	"hediet.vscode-drawio.linkWsSymbolWithSelectedNode";
 const linkFileWithSelectedNodeCommandName =
 	"hediet.vscode-drawio.linkFileWithSelectedNode";
+const createNodeFromSymbolCommandName =
+	"hediet.vscode-drawio.createNodeFromSymbol";
 
 const symbolNameMap: Record<SymbolKind, string> = {
 	[SymbolKind.File]: "symbol-file",
@@ -126,6 +128,10 @@ export class LinkCodeWithSelectedNodeService {
 				linkWsSymbolWithSelectedNodeCommandName,
 				this.linkWsSymbolWithSelectedNode
 			),
+			registerFailableCommand(
+				createNodeFromSymbolCommandName,
+				this.createNodeFromSymbol
+			),
 		]);
 	}
 
@@ -188,6 +194,95 @@ export class LinkCodeWithSelectedNodeService {
 	@action.bound
 	private async linkWsSymbolWithSelectedNode() {
 		this.linkSymbolWithSelectedNode(true);
+	}
+
+	@action.bound
+	private async createNodeFromSymbol() {
+		const lastActiveDrawioEditor =
+			this.editorManager.lastActiveDrawioEditor;
+		if (!lastActiveDrawioEditor) {
+			window.showErrorMessage("No active Draw.io editor. Open a diagram first.");
+			return;
+		}
+
+		const editor = window.activeTextEditor;
+		if (!editor) {
+			window.showErrorMessage("No text editor active. Open a code file first.");
+			return;
+		}
+
+		const uri = editor.document.uri;
+
+		// Get document symbols from the current file
+		const result = (await commands.executeCommand(
+			"vscode.executeDocumentSymbolProvider",
+			uri
+		)) as DocumentSymbol[];
+
+		if (!result || result.length === 0) {
+			window.showErrorMessage("No symbols found in the current file.");
+			return;
+		}
+
+		// Flatten symbols into quick pick items
+		const items: QuickPickItem[] = [];
+		function recurse(symb: DocumentSymbol[], symbolPath: string) {
+			for (const x of symb) {
+				const curpath = symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
+				items.push({
+					label: `$(${symbolNameMap[x.kind]}) ${x.name}`,
+					description: x.detail,
+					detail: curpath,
+				});
+				recurse(x.children, curpath);
+			}
+		}
+		recurse(result, "");
+
+		// Show quick pick
+		const selected = await window.showQuickPick(items, {
+			matchOnDescription: true,
+			matchOnDetail: true,
+			placeHolder: `Create node from symbol in ${path.basename(uri.fsPath)}`,
+		});
+
+		if (!selected) {
+			return; // User cancelled
+		}
+
+		// Create CodePosition for the selected symbol
+		const pos = new CodePosition(uri, selected.detail);
+		const serializedData = pos.serialize(lastActiveDrawioEditor.uri);
+
+		// Calculate position near selected node (if any)
+		let x = 50;
+		let y = 50;
+		try {
+			const geometry = await lastActiveDrawioEditor.drawioClient.getSelectedCellGeometry();
+			if (geometry) {
+				// Position to the right of the selected node with some spacing
+				x = geometry.x + geometry.width + 30;
+				y = geometry.y;
+			}
+		} catch {
+			// If no selection or error, use default position
+		}
+
+		// Create the node with linked data
+		const fileName = path.basename(uri.fsPath);
+		// Get just the symbol name (last part of the path, without class prefix)
+		// and remove any trailing metadata in parentheses (e.g., "( complex: 11 state: ☑ )")
+		const fullPath = selected.detail || selected.label.replace(/^\$\([^)]+\)\s*/, '');
+		const parts = fullPath.split('.');
+		let symbolName = parts[parts.length - 1]; // Get last part (e.g., "❗️💰 onInstall" from "ECDSAValidator.❗️💰 onInstall")
+		symbolName = symbolName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+		const label = `${fileName}\n${symbolName}`;
+		lastActiveDrawioEditor.drawioClient.addVertices([{
+			label,
+			linkedData: serializedData,
+			x,
+			y,
+		}]);
 	}
 
 	@action.bound

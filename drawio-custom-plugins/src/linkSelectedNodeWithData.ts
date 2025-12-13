@@ -169,7 +169,6 @@ Draw.loadPlugin((ui) => {
 				break;
 			}
 			case "addVertices": {
-				// why is this called twice?
 				log("add vertices is being called");
 				const vertices = data.vertices;
 
@@ -177,21 +176,45 @@ Draw.loadPlugin((ui) => {
 				try {
 					let i = 0;
 					for (const v of vertices) {
-						graph.insertVertex(
+						// Use provided position or fallback to default grid layout
+						const x = v.x !== undefined ? v.x : i * 120;
+						const y = v.y !== undefined ? v.y : 0;
+
+						const newCell = graph.insertVertex(
 							undefined,
 							null,
 							v.label,
-							i * 120,
-							0,
+							x,
+							y,
 							100,
 							50,
 							"rectangle"
 						);
+
+						// If linkedData is provided, attach it to the cell
+						if (v.linkedData && newCell) {
+							setLinkedData(newCell, v.linkedData);
+						}
 						i++;
 					}
 				} finally {
 					graph.model.endUpdate();
 				}
+				break;
+			}
+			case "getSelectedCellGeometry": {
+				let geometry = null;
+				if (activeCell) {
+					const geo = graph.getCellGeometry(activeCell);
+					if (geo) {
+						geometry = { x: geo.x, y: geo.y, width: geo.width, height: geo.height };
+					}
+				}
+				sendEvent({
+					event: "getSelectedCellGeometry",
+					message: data,
+					geometry: geometry,
+				});
 				break;
 			}
 			default: {

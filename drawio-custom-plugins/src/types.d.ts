@@ -1,8 +1,8 @@
 
 declare type CustomDrawioAction = UpdateVerticesAction | AddVerticesAction | GetVerticesAction
-    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState;
+    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState | GetSelectedCellGeometryAction;
 declare type CustomDrawioEvent = NodeSelectedEvent | GetVerticesResultEvent
-    | UpdateLocalStorage | PluginLoaded | CursorChangedEvent | SelectionChangedEvent | FocusChangedEvent | InvokeCommandEvent | SelectionRectangleChangedEvent;
+    | UpdateLocalStorage | PluginLoaded | CursorChangedEvent | SelectionChangedEvent | FocusChangedEvent | InvokeCommandEvent | SelectionRectangleChangedEvent | GetSelectedCellGeometryResultEvent;
 
 declare interface InvokeCommandEvent {
     event: "invokeCommand";
@@ -26,7 +26,22 @@ declare interface UpdateVerticesAction {
 
 declare interface AddVerticesAction {
     action: "addVertices";
-    vertices: { label: string }[];
+    vertices: {
+        label: string;
+        linkedData?: any;
+        x?: number;
+        y?: number;
+    }[];
+}
+
+declare interface GetSelectedCellGeometryAction {
+    action: "getSelectedCellGeometry";
+}
+
+declare interface GetSelectedCellGeometryResultEvent {
+    event: "getSelectedCellGeometry";
+    message: GetSelectedCellGeometryAction;
+    geometry: { x: number; y: number; width: number; height: number } | null;
 }
 
 declare interface GetVerticesAction {

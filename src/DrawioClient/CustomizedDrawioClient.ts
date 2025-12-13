@@ -80,11 +80,21 @@ export class CustomizedDrawioClient extends DrawioClient<
 		});
 	}
 
-	public addVertices(vertices: { label: string }[]) {
+	public addVertices(vertices: { label: string; linkedData?: unknown; x?: number; y?: number }[]) {
 		this.sendCustomAction({
 			action: "addVertices",
 			vertices,
 		});
+	}
+
+	public async getSelectedCellGeometry(): Promise<{ x: number; y: number; width: number; height: number } | null> {
+		const response = await this.sendCustomActionExpectResponse({
+			action: "getSelectedCellGeometry",
+		});
+		if (response.event !== "getSelectedCellGeometry") {
+			throw new Error("Invalid Response");
+		}
+		return response.geometry;
 	}
 
 	public updateLiveshareViewState(update: {
