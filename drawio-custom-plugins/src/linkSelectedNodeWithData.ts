@@ -188,7 +188,7 @@ Draw.loadPlugin((ui) => {
 							y,
 							100,
 							50,
-							"rectangle"
+							"rounded=0;whiteSpace=wrap;html=1;rotatable=0"
 						);
 
 						// If linkedData is provided, attach it to the cell
@@ -215,6 +215,67 @@ Draw.loadPlugin((ui) => {
 					message: data,
 					geometry: geometry,
 				});
+				break;
+			}
+			case "createPageFromFile": {
+				const { fileName, fileLinkedData, symbols } = data;
+
+				// Create a new page
+				const page = ui.createPage(fileName);
+				const change = new ChangePage(ui, page, page, ui.pages.length);
+				graph.model.execute(change);
+				ui.selectPage(page);
+
+				// Calculate container dimensions based on number of symbols
+				const nodeHeight = 40;
+				const nodeSpacing = 10;
+				const headerHeight = 30;
+				const containerWidth = 300;
+				const containerHeight = headerHeight + (symbols.length * (nodeHeight + nodeSpacing)) + nodeSpacing;
+
+				graph.model.beginUpdate();
+				try {
+					// Create container node for the file
+					const container = graph.insertVertex(
+						graph.getDefaultParent(),
+						null,
+						fileName,
+						50,
+						50,
+						containerWidth,
+						containerHeight,
+						"rounded=0;whiteSpace=wrap;html=1;container=1;collapsible=0;rotatable=0;verticalAlign=top;fontStyle=1"
+					);
+
+					// Attach file linked data to the container
+					if (fileLinkedData && container) {
+						setLinkedData(container, fileLinkedData);
+					}
+
+					// Create child nodes for each symbol
+					let yOffset = headerHeight + nodeSpacing;
+					for (const symbol of symbols) {
+						const childNode = graph.insertVertex(
+							container,
+							null,
+							symbol.label,
+							10,
+							yOffset,
+							containerWidth - 20,
+							nodeHeight,
+							"rounded=0;whiteSpace=wrap;html=1;rotatable=0"
+						);
+
+						// Attach symbol linked data to the child node
+						if (symbol.linkedData && childNode) {
+							setLinkedData(childNode, symbol.linkedData);
+						}
+
+						yOffset += nodeHeight + nodeSpacing;
+					}
+				} finally {
+					graph.model.endUpdate();
+				}
 				break;
 			}
 			default: {

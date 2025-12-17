@@ -9,6 +9,7 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 - **Elbow edge style by default** - Orthogonal connectors for cleaner diagrams ([2a46a24](https://github.com/nisedo/vscode-drawio/commit/2a46a24))
 - **Google Sheets-style notes** - Right-click nodes to insert/edit/delete notes with tooltip display and visual indicator
 - **Create Node from Symbol** - Command palette to create linked diagram nodes from code symbols
+- **Create Page from File** - Command to create a new diagram page with a container node and function nodes from the current file
 
 ## Install from Source
 

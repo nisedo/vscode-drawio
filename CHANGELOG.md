@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New setting `hediet.vscode-drawio.enablePageView` to control whether page view is enabled by default on new diagrams
 - **Google Sheets-style notes for nodes** - Right-click any node to insert, edit, or delete notes. Notes are displayed on hover via tooltips. Nodes with notes show a small black triangle indicator in the top-right corner
 - **Create Node from Symbol** - New command to create diagram nodes directly from code symbols. Select a symbol from the current file and automatically create a linked node in the diagram
+- **Create Page from File** - New command to create a new diagram page from the current file. Creates a container node for the file with child nodes for each function/method, all linked to their code locations
 
 ### Changed
 

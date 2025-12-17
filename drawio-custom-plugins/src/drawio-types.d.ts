@@ -60,6 +60,15 @@ declare class mxPopupMenu {
     addSeparator(parent?: any): void;
 }
 
+// ChangePage class for page operations
+declare class ChangePage {
+    constructor(ui: DrawioUI, page: DrawioPage, targetPage: DrawioPage, index: number);
+}
+
+declare interface DrawioPage {
+    getName(): string;
+}
+
 declare interface DrawioUI {
     fileNode: Element | null;
     hideDialog(): void;
@@ -68,6 +77,11 @@ declare interface DrawioUI {
     actions: DrawioActions;
     menus: DrawioMenus;
     importLocalFile(args: boolean): void;
+    // Page management
+    pages: DrawioPage[];
+    currentPage: DrawioPage;
+    createPage(name: string): DrawioPage;
+    selectPage(page: DrawioPage): void;
 }
 
 interface DrawioMenus {
@@ -94,7 +108,7 @@ declare interface mxGeometry {
 
 declare interface DrawioGraph {
 	defaultThemeName: string;
-	insertVertex(arg0: undefined, arg1: null, label: string, x: number, y: number, width: number, height: number, style: string): DrawioCell;
+	insertVertex(parent: DrawioCell | undefined, id: string | null, label: string, x: number, y: number, width: number, height: number, style: string): DrawioCell;
 	addListener: any;
 	model: DrawioGraphModel;
 	getLabel(cell: DrawioCell): string;
@@ -108,6 +122,7 @@ declare interface DrawioGraph {
     getSelectionCell(): DrawioCell | null;
     getSelectionCells(): DrawioCell[];
     getCellGeometry(cell: DrawioCell): mxGeometry | null;
+    getDefaultParent(): DrawioCell;
     popupMenuHandler: {
         factoryMethod: (menu: any, cell: DrawioCell | null, evt: Event) => void;
     };
@@ -148,4 +163,5 @@ declare interface DrawioGraphModel {
     isVertex(cell: DrawioCell): boolean;
     isEdge(cell: DrawioCell): boolean;
     addListener(event: string, handler: (...args: any[]) => void): void;
+    execute(change: any): void;
 }

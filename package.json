@@ -151,6 +151,11 @@
 				"command": "hediet.vscode-drawio.createNodeFromSymbol",
 				"title": "Create Node from Symbol",
 				"category": "Draw.io"
+			},
+			{
+				"command": "hediet.vscode-drawio.createPageFromFile",
+				"title": "Create Page from File",
+				"category": "Draw.io"
 			}
 		],
 		"keybindings": [

@@ -97,6 +97,19 @@ export class CustomizedDrawioClient extends DrawioClient<
 		return response.geometry;
 	}
 
+	public createPageFromFile(
+		fileName: string,
+		fileLinkedData: unknown,
+		symbols: { label: string; linkedData: unknown }[]
+	) {
+		this.sendCustomAction({
+			action: "createPageFromFile",
+			fileName,
+			fileLinkedData,
+			symbols,
+		});
+	}
+
 	public updateLiveshareViewState(update: {
 		cursors: ParticipantCursorInfo[];
 		selectedCells: ParticipantSelectedCellsInfo[];

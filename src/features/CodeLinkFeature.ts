@@ -36,6 +36,8 @@ const linkFileWithSelectedNodeCommandName =
 	"hediet.vscode-drawio.linkFileWithSelectedNode";
 const createNodeFromSymbolCommandName =
 	"hediet.vscode-drawio.createNodeFromSymbol";
+const createPageFromFileCommandName =
+	"hediet.vscode-drawio.createPageFromFile";
 
 const symbolNameMap: Record<SymbolKind, string> = {
 	[SymbolKind.File]: "symbol-file",
@@ -131,6 +133,10 @@ export class LinkCodeWithSelectedNodeService {
 			registerFailableCommand(
 				createNodeFromSymbolCommandName,
 				this.createNodeFromSymbol
+			),
+			registerFailableCommand(
+				createPageFromFileCommandName,
+				this.createPageFromFile
 			),
 		]);
 	}
@@ -283,6 +289,83 @@ export class LinkCodeWithSelectedNodeService {
 			x,
 			y,
 		}]);
+	}
+
+	@action.bound
+	private async createPageFromFile() {
+		const lastActiveDrawioEditor =
+			this.editorManager.lastActiveDrawioEditor;
+		if (!lastActiveDrawioEditor) {
+			window.showErrorMessage("No active Draw.io editor. Open a diagram first.");
+			return;
+		}
+
+		const editor = window.activeTextEditor;
+		if (!editor) {
+			window.showErrorMessage("No text editor active. Open a code file first.");
+			return;
+		}
+
+		const uri = editor.document.uri;
+		const fileName = path.basename(uri.fsPath);
+
+		// Get document symbols from the current file
+		const result = (await commands.executeCommand(
+			"vscode.executeDocumentSymbolProvider",
+			uri
+		)) as DocumentSymbol[];
+
+		if (!result || result.length === 0) {
+			window.showErrorMessage("No symbols found in the current file.");
+			return;
+		}
+
+		// Filter to only functions, methods, and constructors
+		const functionKinds = [SymbolKind.Function, SymbolKind.Method, SymbolKind.Constructor];
+		const symbols: { label: string; linkedData: unknown; symbolPath: string }[] = [];
+
+		function collectFunctions(symb: DocumentSymbol[], symbolPath: string) {
+			for (const x of symb) {
+				const curPath = symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
+				if (functionKinds.includes(x.kind)) {
+					symbols.push({
+						label: x.name,
+						linkedData: null, // Will be set below
+						symbolPath: curPath,
+					});
+				}
+				// Recurse into children to find nested functions/methods
+				collectFunctions(x.children, curPath);
+			}
+		}
+		collectFunctions(result, "");
+
+		if (symbols.length === 0) {
+			window.showErrorMessage("No functions or methods found in the current file.");
+			return;
+		}
+
+		// Create CodePosition for the file itself
+		const filePos = new CodePosition(uri, undefined);
+		const fileLinkedData = filePos.serialize(lastActiveDrawioEditor.uri);
+
+		// Create CodePosition for each symbol
+		const symbolsWithLinkedData = symbols.map(s => {
+			const pos = new CodePosition(uri, s.symbolPath);
+			return {
+				label: s.label,
+				linkedData: pos.serialize(lastActiveDrawioEditor.uri),
+			};
+		});
+
+		// Create the page with container and child nodes
+		lastActiveDrawioEditor.drawioClient.createPageFromFile(
+			fileName,
+			fileLinkedData,
+			symbolsWithLinkedData
+		);
+
+		window.showInformationMessage(`Created page "${fileName}" with ${symbols.length} function(s).`);
 	}
 
 	@action.bound

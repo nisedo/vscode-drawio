@@ -1,6 +1,6 @@
 
 declare type CustomDrawioAction = UpdateVerticesAction | AddVerticesAction | GetVerticesAction
-    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState | GetSelectedCellGeometryAction;
+    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState | GetSelectedCellGeometryAction | CreatePageFromFileAction;
 declare type CustomDrawioEvent = NodeSelectedEvent | GetVerticesResultEvent
     | UpdateLocalStorage | PluginLoaded | CursorChangedEvent | SelectionChangedEvent | FocusChangedEvent | InvokeCommandEvent | SelectionRectangleChangedEvent | GetSelectedCellGeometryResultEvent;
 
@@ -42,6 +42,16 @@ declare interface GetSelectedCellGeometryResultEvent {
     event: "getSelectedCellGeometry";
     message: GetSelectedCellGeometryAction;
     geometry: { x: number; y: number; width: number; height: number } | null;
+}
+
+declare interface CreatePageFromFileAction {
+    action: "createPageFromFile";
+    fileName: string;
+    fileLinkedData: any;
+    symbols: {
+        label: string;
+        linkedData: any;
+    }[];
 }
 
 declare interface GetVerticesAction {
