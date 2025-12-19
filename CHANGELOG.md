@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Shapes panel (left sidebar) is now closed by default for a cleaner initial view (fixes [#484](https://github.com/hediet/vscode-drawio/issues/484))
 - Default edge style changed to `elbowEdgeStyle` (orthogonal connectors) for cleaner diagrams
+- **Create Node from Symbol** default node size changed to 120x60 for better readability
+- **Create Node from Symbol** now positions new nodes at the center of the current view instead of at a fixed position
 
 ### Fixed
 
