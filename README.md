@@ -14,7 +14,7 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 ## Install from Source
 
 ```bash
-git clone --recurse-submodules https://github.com/nisedo/vscode-drawio.git && cd vscode-drawio && yarn install && yarn build && code --install-extension ./dist/extension.vsix
+git clone --recurse-submodules https://github.com/nisedo/vscode-drawio.git && cd vscode-drawio && yarn install && yarn build && code --install-extension ./dist/*.vsix
 ```
 
 Then reload VS Code to activate the extension.

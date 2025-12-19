@@ -507,8 +507,8 @@
 		"build-extension": "webpack --mode production",
 		"build-plugins": "webpack --mode production --config ./drawio-custom-plugins/webpack.config.ts",
 		"package-extension": "yarn package-extension-preRelease",
-		"package-extension-stable": "vsce package --yarn --out ./dist/extension.vsix",
-		"package-extension-preRelease": "vsce package --yarn --out ./dist/extension.vsix --pre-release",
+		"package-extension-stable": "vsce package --yarn --out ./dist/",
+		"package-extension-preRelease": "vsce package --yarn --out ./dist/ --pre-release",
 		"dev": "webpack --mode development --watch",
 		"dev-drawio-plugins": "webpack --mode development --watch --config ./drawio-custom-plugins/webpack.config.ts",
 		"dev-drawio-plugins-web": "webpack-dev-server --hot --config ./drawio-custom-plugins/webpack.config.ts"
