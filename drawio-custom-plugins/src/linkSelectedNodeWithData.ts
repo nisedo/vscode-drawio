@@ -15,7 +15,7 @@ Draw.loadPlugin((ui) => {
 	const model = graph.model;
 	let activeCell: DrawioCell | undefined = undefined;
 
-	graph.addListener(mxEvent.DOUBLE_CLICK, function (sender: any, evt: any) {
+	graph.addListener(mxEvent.DOUBLE_CLICK, function (_sender: any, evt: any) {
 		if (!nodeSelectionEnabled) {
 			return;
 		}
@@ -42,7 +42,7 @@ Draw.loadPlugin((ui) => {
 	}
 
 	const selectionModel = graph.getSelectionModel();
-	selectionModel.addListener(mxEvent.CHANGE, (sender: any, evt: any) => {
+	selectionModel.addListener(mxEvent.CHANGE, (_sender: any, _evt: any) => {
 		// selection has changed
 		const cells = selectionModel.cells;
 		if (cells.length >= 1) {
@@ -113,7 +113,6 @@ Draw.loadPlugin((ui) => {
 			return;
 		}
 
-		console.log(evt);
 		const data = JSON.parse(evt.data) as CustomDrawioAction;
 
 		switch (data.action) {

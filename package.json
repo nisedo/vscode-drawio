@@ -503,9 +503,6 @@
 	},
 	"scripts": {
 		"postinstall": "git submodule update --init --recursive",
-		"run-script": "node ./scripts/run-script",
-		"lint": "echo 'add linting'",
-		"_lint": "yarn run-script check-version && prettier --check ./src",
 		"build": "yarn build-extension && yarn build-plugins && yarn package-extension",
 		"build-extension": "webpack --mode production",
 		"build-plugins": "webpack --mode production --config ./drawio-custom-plugins/webpack.config.ts",
@@ -554,7 +551,6 @@
 		"style-loader": "^1.1.3",
 		"ts-loader": "^9.2.3",
 		"ts-node": "^10.1.0",
-		"tslint": "^6.1.2",
 		"typescript": "^5.7.3",
 		"webpack": "^5.44.0",
 		"webpack-cli": "^4.7.2",
