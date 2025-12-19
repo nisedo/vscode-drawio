@@ -37,6 +37,29 @@ export class DrawioClientFactory {
 		};
 		const reloadId = observable({ id: 0 });
 		let i = 0;
+
+		// Debounce HTML updates to batch rapid config changes
+		let pendingHtml: string | null = null;
+		let updateTimeout: NodeJS.Timeout | undefined;
+		const scheduleHtmlUpdate = (html: string, immediate: boolean) => {
+			pendingHtml = html;
+			if (updateTimeout) {
+				clearTimeout(updateTimeout);
+			}
+			if (immediate) {
+				webview.html = pendingHtml;
+				pendingHtml = null;
+			} else {
+				updateTimeout = setTimeout(() => {
+					if (pendingHtml !== null) {
+						webview.html = pendingHtml;
+						pendingHtml = null;
+					}
+				}, 150); // 150ms debounce for config changes
+			}
+		};
+
+		let isFirstLoad = true;
 		const disposeAutorun = autorun(
 			() => {
 				reloadId.id;
@@ -60,7 +83,9 @@ export class DrawioClientFactory {
 				if (config.isResizeImageUpdating) {
 					config.isResizeImageUpdating = false;
 				} else {
-					webview.html = html;
+					// First load should be immediate, subsequent changes debounced
+					scheduleHtmlUpdate(html, isFirstLoad);
+					isFirstLoad = false;
 				}
 			},
 			{ name: "Update Webview Html" }
@@ -117,6 +142,9 @@ export class DrawioClientFactory {
 		});
 
 		webviewPanel.onDidDispose(() => {
+			if (updateTimeout) {
+				clearTimeout(updateTimeout);
+			}
 			disposeAutorun();
 			drawioClient.dispose();
 		});
@@ -301,13 +329,27 @@ export interface DrawioClientOptions {
 	isReadOnly: boolean;
 }
 
+// Only do expensive prettification in dev mode
+const isDev = process.env.DEV === "1";
+
 function prettify(msg: unknown): string {
+	// Skip expensive formatting in production for performance
+	if (!isDev) {
+		if (typeof msg === "string") {
+			// Just show message type without parsing
+			const typeMatch = msg.match(/"(?:event|action)"\s*:\s*"([^"]+)"/);
+			return typeMatch ? `{${typeMatch[0]}...}` : "(message)";
+		}
+		const obj = msg as any;
+		return obj?.event ? `{event:"${obj.event}"...}` : obj?.action ? `{action:"${obj.action}"...}` : "(message)";
+	}
+	// Full formatting only in dev mode
 	try {
 		if (typeof msg === "string") {
 			const obj = JSON.parse(msg as string);
-			return formatValue(obj, process.env.DEV === "1" ? 500 : 80);
+			return formatValue(obj, 500);
 		}
-		return formatValue(msg, process.env.DEV === "1" ? 500 : 80);
+		return formatValue(msg, 500);
 	} catch { }
 	return "" + msg;
 }

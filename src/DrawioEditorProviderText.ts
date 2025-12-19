@@ -11,6 +11,20 @@ import {
 import formatter = require("xml-formatter");
 import { DrawioEditorService } from "./DrawioEditorService";
 
+// Debounce utility for performance optimization
+function debounce<T extends (...args: any[]) => any>(
+	fn: T,
+	delay: number
+): (...args: Parameters<T>) => void {
+	let timeoutId: NodeJS.Timeout | undefined;
+	return (...args: Parameters<T>) => {
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+		}
+		timeoutId = setTimeout(() => fn(...args), delay);
+	};
+}
+
 export class DrawioEditorProviderText implements CustomTextEditorProvider {
 	constructor(private readonly drawioEditorService: DrawioEditorService) {}
 
@@ -72,30 +86,40 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				await drawioClient.mergeXmlLike(newText);
 			});
 
-			drawioClient.onChange.sub(async ({ oldXml, newXml }) => {
+			// Store pending XML to process - debouncing ensures we use the latest
+			let pendingXml: string | null = null;
+
+			// Debounced function that processes the pending XML change
+			// 100ms delay balances responsiveness with performance
+			const processXmlChange = debounce(async () => {
+				if (pendingXml === null) return;
+
+				let xmlToProcess = pendingXml;
+				pendingXml = null;
+
 				// We format the xml so that it can be easily edited in a second text editor.
 				async function getOutput(): Promise<string> {
 					if (document.uri.path.endsWith(".svg")) {
 						const svg =
 							await drawioClient.exportAsSvgWithEmbeddedXml();
-						newXml = svg.toString("utf-8");
+						xmlToProcess = svg.toString("utf-8");
 
 						// This adds a host to track which files are created by this extension and which by draw.io desktop.
-						newXml = newXml.replace(
+						xmlToProcess = xmlToProcess.replace(
 							/^<svg /,
 							() => `<svg host="65bd71144e" `
 						);
 
-						return formatter(newXml);
+						return formatter(xmlToProcess);
 					} else {
-						if (newXml.startsWith('<mxfile host="')) {
-							newXml = newXml.replace(
+						if (xmlToProcess.startsWith('<mxfile host="')) {
+							xmlToProcess = xmlToProcess.replace(
 								/^<mxfile host="(.*?)"/,
 								() => `<mxfile host="65bd71144e"`
 							);
 						} else {
 							// in case there is no host attribute
-							newXml = newXml
+							xmlToProcess = xmlToProcess
 								.replace(
 									/^<mxfile /,
 									() => `<mxfile host="65bd71144e"`
@@ -108,7 +132,7 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 
 						return formatter(
 							// This normalizes the host
-							newXml
+							xmlToProcess
 						);
 					}
 				}
@@ -139,6 +163,11 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				} finally {
 					isThisEditorSaving = false;
 				}
+			}, 100);
+
+			drawioClient.onChange.sub(({ newXml }) => {
+				pendingXml = newXml;
+				processXmlChange();
 			});
 
 			drawioClient.onSave.sub(async () => {
