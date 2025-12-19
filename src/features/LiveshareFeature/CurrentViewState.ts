@@ -61,7 +61,16 @@ function getSelectedRectangleResource(
 		(sink) =>
 			Disposable.fn((track) => {
 				let lastRect: Rectangle | undefined;
-				let timeout: any;
+				let timeout: ReturnType<typeof setTimeout> | undefined;
+
+				// Clean up timeout on dispose
+				track({
+					dispose: () => {
+						if (timeout) {
+							clearTimeout(timeout);
+						}
+					},
+				});
 
 				track(
 					drawioInstance.onFocusChanged.sub(({ hasFocus }) => {
@@ -95,7 +104,16 @@ function getCursorPositionResource(
 		(sink) =>
 			Disposable.fn((track) => {
 				let lastPosition: Point | undefined;
-				let timeout: any;
+				let timeout: ReturnType<typeof setTimeout> | undefined;
+
+				// Clean up timeout on dispose
+				track({
+					dispose: () => {
+						if (timeout) {
+							clearTimeout(timeout);
+						}
+					},
+				});
 
 				track(
 					drawioInstance.onFocusChanged.sub(({ hasFocus }) => {

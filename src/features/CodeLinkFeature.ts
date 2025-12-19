@@ -509,6 +509,11 @@ export class LinkCodeWithSelectedNodeService {
 			});
 			e.revealRange(pos.range, TextEditorRevealType.Default);
 
+			// Dispose the previous decoration type to prevent memory leaks
+			if (this.lastDecorationType) {
+				this.lastDecorationType.dispose();
+			}
+
 			const highlightDecorationType =
 				window.createTextEditorDecorationType({
 					backgroundColor: new ThemeColor(
@@ -516,14 +521,14 @@ export class LinkCodeWithSelectedNodeService {
 					),
 				});
 
-			if (this.lastDecorationType) {
-				e.setDecorations(this.lastDecorationType, []);
-			}
 			this.lastDecorationType = highlightDecorationType;
 
 			e.setDecorations(highlightDecorationType, [pos.range]);
 			wait(1000).then(() => {
-				e.setDecorations(highlightDecorationType, []);
+				// Only clear if this is still the active decoration
+				if (this.lastDecorationType === highlightDecorationType) {
+					e.setDecorations(highlightDecorationType, []);
+				}
 			});
 		} else {
 			await commands.executeCommand("vscode.open", pos.uri, {

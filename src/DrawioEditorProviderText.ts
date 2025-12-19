@@ -48,19 +48,8 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				);
 			const drawioClient = editor.drawioClient;
 
-			interface NormalizedDocument {
-				equals(other: this): boolean;
-			}
-
-			function getNormalizedDocument(src: string): NormalizedDocument {
-				const result = {
-					src,
-					equals: (o: any) => o.src === src,
-				};
-				return result;
-			}
-
-			let lastDocument = getNormalizedDocument(document.getText());
+			// Track last document text for change detection (simple string comparison)
+			let lastDocumentText = document.getText();
 			let isThisEditorSaving = false;
 
 			workspace.onDidChangeTextDocument(async (evt) => {
@@ -77,11 +66,10 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				}
 
 				const newText = evt.document.getText();
-				const newDocument = getNormalizedDocument(newText);
-				if (newDocument.equals(lastDocument)) {
+				if (newText === lastDocumentText) {
 					return;
 				}
-				lastDocument = newDocument;
+				lastDocumentText = newText;
 
 				await drawioClient.mergeXmlLike(newText);
 			});
@@ -138,11 +126,10 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				}
 
 				const output = await getOutput();
-				const newDocument = getNormalizedDocument(output);
-				if (newDocument.equals(lastDocument)) {
+				if (output === lastDocumentText) {
 					return;
 				}
-				lastDocument = newDocument;
+				lastDocumentText = output;
 
 				const workspaceEdit = new WorkspaceEdit();
 
