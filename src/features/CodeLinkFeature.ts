@@ -230,20 +230,40 @@ export class LinkCodeWithSelectedNodeService {
 			return;
 		}
 
-		// Flatten symbols into quick pick items
-		const items: QuickPickItem[] = [];
+		// Get visible ranges to prioritize symbols on screen
+		const visibleRanges = editor.visibleRanges;
+		const isInVisibleRange = (symbolRange: Range): boolean => {
+			return visibleRanges.some(vr => vr.intersection(symbolRange) !== undefined);
+		};
+
+		// Flatten symbols into quick pick items with range info for sorting
+		interface SymbolItem extends QuickPickItem {
+			range: Range;
+			isVisible: boolean;
+		}
+		const items: SymbolItem[] = [];
 		function recurse(symb: DocumentSymbol[], symbolPath: string) {
 			for (const x of symb) {
 				const curpath = symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
+				const isVisible = isInVisibleRange(x.selectionRange);
 				items.push({
 					label: `$(${symbolNameMap[x.kind]}) ${x.name}`,
-					description: x.detail,
+					description: isVisible ? "$(eye) visible" : x.detail,
 					detail: curpath,
+					range: x.selectionRange,
+					isVisible,
 				});
 				recurse(x.children, curpath);
 			}
 		}
 		recurse(result, "");
+
+		// Sort: visible symbols first, then by line number
+		items.sort((a, b) => {
+			if (a.isVisible && !b.isVisible) return -1;
+			if (!a.isVisible && b.isVisible) return 1;
+			return a.range.start.line - b.range.start.line;
+		});
 
 		// Show quick pick
 		const selected = await window.showQuickPick(items, {
