@@ -23,6 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Reverts change to automatically follow VS Code dark/light theme [#457](https://github.com/hediet/vscode-drawio/issues/457)
+- **Export now exports the active page** instead of always exporting the first page
+- Fixed `TextEditorDecorationType` memory leak in Code Link feature
+- Fixed timeout cleanup on dispose in Liveshare feature
+
+### Performance
+
+- Added debouncing to autosave (100ms) for smoother editing experience
+- Added debouncing to config-triggered webview reloads (150ms)
+- Optimized message logging to skip expensive JSON parsing in production
+- Simplified document change detection (removed unnecessary abstraction)
 
 
 ## [1.8.0]
