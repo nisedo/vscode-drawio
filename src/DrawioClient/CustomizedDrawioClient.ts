@@ -80,7 +80,7 @@ export class CustomizedDrawioClient extends DrawioClient<
 		});
 	}
 
-	public addVertices(vertices: { label: string; linkedData?: unknown; x?: number; y?: number }[]) {
+	public addVertices(vertices: { label: string; linkedData?: unknown; x?: number; y?: number; width?: number; height?: number }[]) {
 		this.sendCustomAction({
 			action: "addVertices",
 			vertices,

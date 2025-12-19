@@ -31,6 +31,8 @@ declare interface AddVerticesAction {
         linkedData?: any;
         x?: number;
         y?: number;
+        width?: number;
+        height?: number;
     }[];
 }
 

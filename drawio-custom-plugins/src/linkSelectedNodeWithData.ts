@@ -178,6 +178,9 @@ Draw.loadPlugin((ui) => {
 						// Use provided position or fallback to default grid layout
 						const x = v.x !== undefined ? v.x : i * 120;
 						const y = v.y !== undefined ? v.y : 0;
+						// Use provided size or fallback to default 120x60
+						const width = v.width !== undefined ? v.width : 120;
+						const height = v.height !== undefined ? v.height : 60;
 
 						const newCell = graph.insertVertex(
 							undefined,
@@ -185,8 +188,8 @@ Draw.loadPlugin((ui) => {
 							v.label,
 							x,
 							y,
-							100,
-							50,
+							width,
+							height,
 							"rounded=0;whiteSpace=wrap;html=1;rotatable=0"
 						);
 
