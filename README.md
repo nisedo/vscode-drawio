@@ -35,6 +35,7 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 |---------|--------|
 | Export to PNG, SVG, PDF, and more | Original |
 | Convert between diagram formats | Original |
+| **Export active page** - Exports current page instead of first page | Fork |
 
 ### Customization
 | Feature | Source |
@@ -68,6 +69,8 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 - **Google Sheets-style notes** - Right-click nodes to insert/edit/delete notes with tooltip display and visual indicator ([9b99dd4](https://github.com/nisedo/vscode-drawio/commit/9b99dd4))
 - **Create Node from Symbol** - Command palette to create linked diagram nodes from code symbols ([b2ef148](https://github.com/nisedo/vscode-drawio/commit/b2ef148))
 - **Create Page from File** - Command to create a new diagram page with a container node and function nodes from the current file ([551aba4](https://github.com/nisedo/vscode-drawio/commit/551aba4))
+- **Export active page fix** - Export now exports the currently active page instead of always the first page ([50ede86](https://github.com/nisedo/vscode-drawio/commit/50ede86))
+- **Performance optimizations** - Debounced autosave, optimized logging, memory leak fixes ([e51dd46](https://github.com/nisedo/vscode-drawio/commit/e51dd46))
 
 ## Install from Source
 
