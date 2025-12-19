@@ -60,16 +60,34 @@ export class Extension {
 			registerFailableCommand(
 				"hediet.vscode-drawio.newDiagram",
 				async () => {
-					const targetUri = await vscode.window.showSaveDialog({
-						saveLabel: "Create",
-						filters: {
-							Diagrams: ["drawio"],
-						},
-					});
-					if (!targetUri) {
+					// Get the workspace root folder
+					const workspaceFolders = vscode.workspace.workspaceFolders;
+					if (!workspaceFolders || workspaceFolders.length === 0) {
+						await vscode.window.showErrorMessage(
+							"No workspace folder open. Please open a folder first."
+						);
 						return;
 					}
+
+					const rootFolder = workspaceFolders[0].uri;
+					const repoName = workspaceFolders[0].name;
+					const targetUri = vscode.Uri.joinPath(rootFolder, `${repoName}.drawio`);
+
 					try {
+						// Check if file already exists
+						try {
+							await vscode.workspace.fs.stat(targetUri);
+							// File exists, just open it
+							await vscode.commands.executeCommand(
+								"vscode.openWith",
+								targetUri,
+								"hediet.vscode-drawio-text"
+							);
+							return;
+						} catch {
+							// File doesn't exist, create it
+						}
+
 						await vscode.workspace.fs.writeFile(
 							targetUri,
 							new Uint8Array()
