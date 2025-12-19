@@ -1,8 +1,8 @@
 
 declare type CustomDrawioAction = UpdateVerticesAction | AddVerticesAction | GetVerticesAction
-    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState | GetSelectedCellGeometryAction | CreatePageFromFileAction;
+    | LinkSelectedNodeWithDataAction | NodeSelectionEnabledAction | UpdateLiveshareViewState | GetSelectedCellGeometryAction | CreatePageFromFileAction | GetViewCenterAction;
 declare type CustomDrawioEvent = NodeSelectedEvent | GetVerticesResultEvent
-    | UpdateLocalStorage | PluginLoaded | CursorChangedEvent | SelectionChangedEvent | FocusChangedEvent | InvokeCommandEvent | SelectionRectangleChangedEvent | GetSelectedCellGeometryResultEvent;
+    | UpdateLocalStorage | PluginLoaded | CursorChangedEvent | SelectionChangedEvent | FocusChangedEvent | InvokeCommandEvent | SelectionRectangleChangedEvent | GetSelectedCellGeometryResultEvent | GetViewCenterResultEvent;
 
 declare interface InvokeCommandEvent {
     event: "invokeCommand";
@@ -44,6 +44,16 @@ declare interface GetSelectedCellGeometryResultEvent {
     event: "getSelectedCellGeometry";
     message: GetSelectedCellGeometryAction;
     geometry: { x: number; y: number; width: number; height: number } | null;
+}
+
+declare interface GetViewCenterAction {
+    action: "getViewCenter";
+}
+
+declare interface GetViewCenterResultEvent {
+    event: "getViewCenter";
+    message: GetViewCenterAction;
+    center: { x: number; y: number };
 }
 
 declare interface CreatePageFromFileAction {

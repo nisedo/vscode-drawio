@@ -219,6 +219,24 @@ Draw.loadPlugin((ui) => {
 				});
 				break;
 			}
+			case "getViewCenter": {
+				// Get the center of the current visible area in graph coordinates
+				const view = graph.view as any;
+				const container = (graph as any).container;
+				const scale = view.scale;
+				const translate = view.translate;
+
+				// Calculate center of visible area
+				const centerX = (container.scrollLeft + container.clientWidth / 2) / scale - translate.x;
+				const centerY = (container.scrollTop + container.clientHeight / 2) / scale - translate.y;
+
+				sendEvent({
+					event: "getViewCenter",
+					message: data,
+					center: { x: Math.round(centerX), y: Math.round(centerY) },
+				});
+				break;
+			}
 			case "createPageFromFile": {
 				const { fileName, fileLinkedData, symbols } = data;
 

@@ -97,6 +97,16 @@ export class CustomizedDrawioClient extends DrawioClient<
 		return response.geometry;
 	}
 
+	public async getViewCenter(): Promise<{ x: number; y: number }> {
+		const response = await this.sendCustomActionExpectResponse({
+			action: "getViewCenter",
+		});
+		if (response.event !== "getViewCenter") {
+			throw new Error("Invalid Response");
+		}
+		return response.center;
+	}
+
 	public createPageFromFile(
 		fileName: string,
 		fileLinkedData: unknown,

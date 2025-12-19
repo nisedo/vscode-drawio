@@ -260,18 +260,16 @@ export class LinkCodeWithSelectedNodeService {
 		const pos = new CodePosition(uri, selected.detail);
 		const serializedData = pos.serialize(lastActiveDrawioEditor.uri);
 
-		// Calculate position near selected node (if any)
+		// Get center of current view for node placement
 		let x = 50;
 		let y = 50;
 		try {
-			const geometry = await lastActiveDrawioEditor.drawioClient.getSelectedCellGeometry();
-			if (geometry) {
-				// Position to the right of the selected node with some spacing
-				x = geometry.x + geometry.width + 30;
-				y = geometry.y;
-			}
+			const center = await lastActiveDrawioEditor.drawioClient.getViewCenter();
+			// Offset so the node is centered (node size is 120x60)
+			x = center.x - 60;
+			y = center.y - 30;
 		} catch {
-			// If no selection or error, use default position
+			// If error, use default position
 		}
 
 		// Create the node with linked data
