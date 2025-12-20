@@ -295,6 +295,7 @@ export class DiagramConfig {
 			scope: this.uri,
 			serializer: serializerWithDefault<Record<string, string>>({
 				edgeStyle: "elbowEdgeStyle",
+				html: "1",
 			}),
 		}
 	);
