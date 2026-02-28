@@ -93,6 +93,14 @@ Draw.loadPlugin((ui) => {
 		}
 	}
 
+	function cleanupStaleOverlays(): void {
+		for (const id of [...cellOverlays.keys()]) {
+			if (!model.cells[id]) {
+				cellOverlays.delete(id);
+			}
+		}
+	}
+
 	/**
 	 * Initialize overlays for all existing cells with notes
 	 */
@@ -220,16 +228,29 @@ Draw.loadPlugin((ui) => {
 	}, 500);
 
 	// Listen for model changes to update overlays
-	model.addListener(mxEvent.CHANGE, () => {
-		// Re-scan all cells for notes when the model changes
-		setTimeout(() => {
-			const cells = model.cells;
-			for (const id in cells) {
-				const cell = cells[id];
-				if (model.isVertex(cell) || model.isEdge(cell)) {
-					updateNoteIndicator(cell);
+	model.addListener(mxEvent.CHANGE, (_sender: unknown, evt: any) => {
+		const edit = evt?.getProperty?.("edit");
+		const changes = edit?.changes;
+
+		const changedCells = new Map<string, DrawioCell>();
+		if (Array.isArray(changes)) {
+			for (const change of changes) {
+				for (const cell of [change?.cell, change?.child, change?.previous]) {
+					if (
+						cell &&
+						cell.id &&
+						(model.isVertex(cell) || model.isEdge(cell))
+					) {
+						changedCells.set(cell.id, cell);
+					}
 				}
 			}
-		}, 100);
+		}
+
+		for (const cell of changedCells.values()) {
+			updateNoteIndicator(cell);
+		}
+
+		cleanupStaleOverlays();
 	});
 });

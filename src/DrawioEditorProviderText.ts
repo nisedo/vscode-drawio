@@ -25,6 +25,42 @@ function debounce<T extends (...args: any[]) => any>(
 	};
 }
 
+function getMinimalTextEdit(
+	oldText: string,
+	newText: string
+): { startOffset: number; endOffset: number; newText: string } | undefined {
+	if (oldText === newText) {
+		return undefined;
+	}
+
+	let startOffset = 0;
+	const minLength = Math.min(oldText.length, newText.length);
+	while (
+		startOffset < minLength &&
+		oldText.charCodeAt(startOffset) === newText.charCodeAt(startOffset)
+	) {
+		startOffset++;
+	}
+
+	let endOffsetOld = oldText.length;
+	let endOffsetNew = newText.length;
+	while (
+		endOffsetOld > startOffset &&
+		endOffsetNew > startOffset &&
+		oldText.charCodeAt(endOffsetOld - 1) ===
+			newText.charCodeAt(endOffsetNew - 1)
+	) {
+		endOffsetOld--;
+		endOffsetNew--;
+	}
+
+	return {
+		startOffset,
+		endOffset: endOffsetOld,
+		newText: newText.slice(startOffset, endOffsetNew),
+	};
+}
+
 export class DrawioEditorProviderText implements CustomTextEditorProvider {
 	constructor(private readonly drawioEditorService: DrawioEditorService) {}
 
@@ -45,34 +81,42 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 						document,
 					},
 					{ isReadOnly }
-				);
+			);
 			const drawioClient = editor.drawioClient;
+			const editorDisposables: { dispose(): void }[] = [];
+
+			const track = <T extends { dispose(): void }>(d: T): T => {
+				editorDisposables.push(d);
+				return d;
+			};
 
 			// Track last document text for change detection (simple string comparison)
 			let lastDocumentText = document.getText();
 			let isThisEditorSaving = false;
 
-			workspace.onDidChangeTextDocument(async (evt) => {
-				if (evt.document !== document) {
-					return;
-				}
-				if (isThisEditorSaving) {
-					// We don't want to process our own changes.
-					return;
-				}
-				if (evt.contentChanges.length === 0) {
-					// Sometimes VS Code reports a document change without a change.
-					return;
-				}
+			track(
+				workspace.onDidChangeTextDocument(async (evt) => {
+					if (evt.document !== document) {
+						return;
+					}
+					if (isThisEditorSaving) {
+						// We don't want to process our own changes.
+						return;
+					}
+					if (evt.contentChanges.length === 0) {
+						// Sometimes VS Code reports a document change without a change.
+						return;
+					}
 
-				const newText = evt.document.getText();
-				if (newText === lastDocumentText) {
-					return;
-				}
-				lastDocumentText = newText;
+					const newText = evt.document.getText();
+					if (newText === lastDocumentText) {
+						return;
+					}
+					lastDocumentText = newText;
 
-				await drawioClient.mergeXmlLike(newText);
-			});
+					await drawioClient.mergeXmlLike(newText);
+				})
+			);
 
 			// Store pending XML to process - debouncing ensures we use the latest
 			let pendingXml: string | null = null;
@@ -125,24 +169,35 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 					}
 				}
 
+				const currentDocumentText = lastDocumentText;
 				const output = await getOutput();
-				if (output === lastDocumentText) {
+				if (output === currentDocumentText) {
 					return;
 				}
-				lastDocumentText = output;
+				const minimalTextEdit = getMinimalTextEdit(
+					currentDocumentText,
+					output
+				);
+				if (!minimalTextEdit) {
+					return;
+				}
 
 				const workspaceEdit = new WorkspaceEdit();
 
-				// TODO diff the new document with the old document and only edit the changes.
 				workspaceEdit.replace(
 					document.uri,
-					new Range(0, 0, document.lineCount, 0),
-					output
+					new Range(
+						document.positionAt(minimalTextEdit.startOffset),
+						document.positionAt(minimalTextEdit.endOffset)
+					),
+					minimalTextEdit.newText
 				);
 
 				isThisEditorSaving = true;
 				try {
-					if (!(await workspace.applyEdit(workspaceEdit))) {
+					if (await workspace.applyEdit(workspaceEdit)) {
+						lastDocumentText = output;
+					} else {
 						window.showErrorMessage(
 							"Could not apply Draw.io document changes to the underlying document. Try to save again!"
 						);
@@ -152,17 +207,30 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				}
 			}, 100);
 
-			drawioClient.onChange.sub(({ newXml }) => {
-				pendingXml = newXml;
-				processXmlChange();
-			});
+			track(
+				drawioClient.onChange.sub(({ newXml }) => {
+					pendingXml = newXml;
+					processXmlChange();
+				})
+			);
 
-			drawioClient.onSave.sub(async () => {
-				await document.save();
-			});
+			track(
+				drawioClient.onSave.sub(async () => {
+					await document.save();
+				})
+			);
 
-			drawioClient.onInit.sub(async () => {
-				drawioClient.loadXmlLike(document.getText());
+			track(
+				drawioClient.onInit.sub(async () => {
+					drawioClient.loadXmlLike(document.getText());
+				})
+			);
+
+			webviewPanel.onDidDispose(() => {
+				for (const d of editorDisposables) {
+					d.dispose();
+				}
+				editorDisposables.length = 0;
 			});
 		} catch (e) {
 			window.showErrorMessage(`Failed to open diagram: ${e}`);
