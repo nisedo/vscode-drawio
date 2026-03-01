@@ -706,6 +706,7 @@ async function resolveWorkspaceSymbol(
 		"vscode.executeWorkspaceSymbolProvider",
 		symbolName
 	)) as SymbolInformation[];
+	for (let x of result) console.log(x.name);
 	const filtered = result
 		.filter((r) => r.name === symbolName)
 		.sort(

@@ -542,6 +542,7 @@
 				 * @param url {string}
 				 */
 				function loadScript(url) {
+					console.log("load custom plugin:", url);
 					const pluginScript = document.createElement("script");
 					pluginScript.type = "text/javascript";
 					pluginScript.src = url;

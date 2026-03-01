@@ -1,10 +1,4 @@
-import {
-	Uri,
-	workspace,
-	ConfigurationTarget,
-	Disposable,
-	ConfigurationChangeEvent,
-} from "vscode";
+import { Uri, workspace, ConfigurationTarget, Disposable } from "vscode";
 import { fromResource } from "../utils/fromResource";
 import { computed, runInAction } from "mobx";
 import { EventEmitter } from "@hediet/std/events";
@@ -92,16 +86,12 @@ export class VsCodeSetting<T> {
 }
 
 class VsCodeSettingResource {
-	public static onConfigChange = new EventEmitter<{
-		event: ConfigurationChangeEvent;
-	}>();
+	public static onConfigChange = new EventEmitter();
 
 	private readonly resource = fromResource<any>(
 		(update) => {
-			return VsCodeSettingResource.onConfigChange.sub(({ event }) => {
-				if (event.affectsConfiguration(this.id, this.scope)) {
-					update();
-				}
+			return VsCodeSettingResource.onConfigChange.sub(() => {
+				update();
 			});
 		},
 		() => this.readValue()
@@ -153,8 +143,8 @@ class VsCodeSettingResource {
 	}
 }
 
-workspace.onDidChangeConfiguration((event) => {
+workspace.onDidChangeConfiguration(() => {
 	runInAction("Update Configuration", () => {
-		VsCodeSettingResource.onConfigChange.emit({ event });
+		VsCodeSettingResource.onConfigChange.emit();
 	});
 });

@@ -30,11 +30,7 @@ export class SessionModel {
 				peerId: update.peerId,
 				viewState: update.newViewState,
 			};
-			if (
-				!val ||
-				val.peerId !== newVal.peerId ||
-				!viewStateEquals(val.viewState, newVal.viewState)
-			) {
+			if (JSON.stringify(val) !== JSON.stringify(newVal)) {
 				this.viewStatesByPeerId.set(update.peerId, newVal);
 			}
 		}
@@ -54,62 +50,3 @@ export type SessionModelUpdate =
 			kind: "removePeer";
 			peerId: number;
 	  };
-
-function viewStateEquals(a: ViewState, b: ViewState): boolean {
-	if (a === b) {
-		return true;
-	}
-	if (!a || !b) {
-		return false;
-	}
-
-	return (
-		a.activeUri === b.activeUri &&
-		pointEquals(a.currentCursor, b.currentCursor) &&
-		rectangleEquals(a.selectedRectangle, b.selectedRectangle) &&
-		stringArrayEquals(a.selectedCellIds, b.selectedCellIds)
-	);
-}
-
-function pointEquals(a: Point | undefined, b: Point | undefined): boolean {
-	if (a === b) {
-		return true;
-	}
-	if (!a || !b) {
-		return false;
-	}
-	return a.x === b.x && a.y === b.y;
-}
-
-function rectangleEquals(
-	a: Rectangle | undefined,
-	b: Rectangle | undefined
-): boolean {
-	if (a === b) {
-		return true;
-	}
-	if (!a || !b) {
-		return false;
-	}
-	return (
-		a.start.x === b.start.x &&
-		a.start.y === b.start.y &&
-		a.end.x === b.end.x &&
-		a.end.y === b.end.y
-	);
-}
-
-function stringArrayEquals(a: string[], b: string[]): boolean {
-	if (a === b) {
-		return true;
-	}
-	if (a.length !== b.length) {
-		return false;
-	}
-	for (let i = 0; i < a.length; i++) {
-		if (a[i] !== b[i]) {
-			return false;
-		}
-	}
-	return true;
-}

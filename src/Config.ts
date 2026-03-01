@@ -87,29 +87,6 @@ export class Config {
 		return this._experimentalFeatures.get();
 	}
 
-	private readonly _retainContextWhenHidden = new VsCodeSetting(
-		`${extensionId}.retainContextWhenHidden`,
-		{
-			serializer: serializerWithDefault<boolean>(false),
-		}
-	);
-
-	public get retainContextWhenHidden(): boolean {
-		return this._retainContextWhenHidden.get();
-	}
-
-	private readonly _enableVerboseLogging = new VsCodeSetting(
-		`${extensionId}.enableVerboseLogging`,
-		{
-			serializer: serializerWithDefault<boolean>(false),
-			target: ConfigurationTarget.Global,
-		}
-	);
-
-	public get verboseLogging(): boolean {
-		return this._enableVerboseLogging.get();
-	}
-
 	public get canAskForFeedback(): boolean {
 		if (
 			this.getInternalConfig().versionLastAskedForFeedback ===

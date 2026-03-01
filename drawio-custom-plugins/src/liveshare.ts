@@ -54,21 +54,18 @@ Draw.loadPlugin((ui) => {
 			}
 			const data = JSON.parse(evt.data) as CustomDrawioAction;
 
-				switch (data.action) {
-					case "updateLiveshareViewState": {
-						const incomingCursorIds = new Set(
-							data.cursors.map((cursor) => cursor.id)
-						);
-						for (const cursor of [...cursors]) {
-							if (!incomingCursorIds.has(cursor.id)) {
-								cursors.delete(cursor);
-								cursor.dispose();
-							}
+			switch (data.action) {
+				case "updateLiveshareViewState": {
+					for (const c of cursors) {
+						if (!data.cursors.some((c) => c.id === c.id)) {
+							cursors.delete(c);
+							c.dispose();
 						}
-						for (const c of data.cursors) {
-							const existing =
-								[...cursors].find(
-									(existingCursor) => existingCursor.id === c.id
+					}
+					for (const c of data.cursors) {
+						const existing =
+							[...cursors].find(
+								(existingCursor) => existingCursor.id === c.id
 							) ||
 							new Cursor(graph.view.canvas, c.id, {
 								color: c.color,
@@ -79,29 +76,26 @@ Draw.loadPlugin((ui) => {
 						existing.setPosition(transform(c.position));
 					}
 
-						const highlightInfos = new Array<HighlightInfo>();
-						for (const s of data.selectedCells) {
-							for (const selectedCellId of s.selectedCellIds) {
-								const cell = graph.model.cells[selectedCellId];
-								if (cell) {
-									highlightInfos.push({ cell, color: s.color });
-								}
-							}
+					const highlightInfos = new Array<HighlightInfo>();
+					for (const s of data.selectedCells) {
+						for (const selectedCellId of s.selectedCellIds) {
+							const cell = graph.model.cells[selectedCellId];
+							highlightInfos.push({ cell, color: s.color });
 						}
-						hightlights.updateHighlights(highlightInfos);
+					}
+					hightlights.updateHighlights(highlightInfos);
 
-						const incomingRectangleIds = new Set(
-							data.selectedRectangles.map((rectangle) => rectangle.id)
-						);
-						for (const rectangle of [...rectangles]) {
-							if (!incomingRectangleIds.has(rectangle.id)) {
-								rectangles.delete(rectangle);
-								rectangle.dispose();
-							}
+					for (const c of rectangles) {
+						if (
+							!data.selectedRectangles.some((c) => c.id === c.id)
+						) {
+							rectangles.delete(c);
+							c.dispose();
 						}
-						for (const c of data.selectedRectangles) {
-							const existing =
-								[...rectangles].find(
+					}
+					for (const c of data.selectedRectangles) {
+						const existing =
+							[...rectangles].find(
 								(existingRectangle) =>
 									existingRectangle.id === c.id
 							) ||

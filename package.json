@@ -249,21 +249,6 @@
 						"title": "Enable Page View by Default",
 						"description": "When enabled, new diagrams will show the page view (page boundaries) by default.",
 						"order": 81
-					},
-					"hediet.vscode-drawio.retainContextWhenHidden": {
-						"type": "boolean",
-						"default": false,
-						"title": "Retain Hidden Webview Context",
-						"description": "When enabled, hidden Draw.io editors keep their full webview state in memory. Disable for lower memory usage.",
-						"order": 82
-					},
-					"hediet.vscode-drawio.enableVerboseLogging": {
-						"type": "boolean",
-						"default": false,
-						"title": "Enable Verbose Message Logging",
-						"description": "When enabled, logs message traffic between VS Code and Draw.io for debugging.",
-						"scope": "application",
-						"order": 83
 					}
 				}
 			},

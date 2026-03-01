@@ -36,33 +36,23 @@ export class DrawioClientFactory {
 			enableScripts: true,
 		};
 		const reloadId = observable({ id: 0 });
+		let i = 0;
 
 		// Debounce HTML updates to batch rapid config changes
 		let pendingHtml: string | null = null;
 		let updateTimeout: NodeJS.Timeout | undefined;
-		let lastAppliedHtml: string | undefined;
-		const applyHtml = (newHtml: string) => {
-			if (newHtml === lastAppliedHtml) {
-				return;
-			}
-			webview.html = newHtml;
-			lastAppliedHtml = newHtml;
-		};
-		const scheduleHtmlUpdate = (newHtml: string, immediate: boolean) => {
-			if (newHtml === pendingHtml || newHtml === lastAppliedHtml) {
-				return;
-			}
-			pendingHtml = newHtml;
+		const scheduleHtmlUpdate = (html: string, immediate: boolean) => {
+			pendingHtml = html;
 			if (updateTimeout) {
 				clearTimeout(updateTimeout);
 			}
 			if (immediate) {
-				applyHtml(newHtml);
+				webview.html = pendingHtml;
 				pendingHtml = null;
 			} else {
 				updateTimeout = setTimeout(() => {
 					if (pendingHtml !== null) {
-						applyHtml(pendingHtml);
+						webview.html = pendingHtml;
 						pendingHtml = null;
 					}
 				}, 150); // 150ms debounce for config changes
@@ -88,7 +78,7 @@ export class DrawioClientFactory {
 				config.resizeImages;
 				const html =
 					this.getHtml(config, options, webview, plugins) +
-					`\n<!-- drawio-reload:${reloadId.id} -->`;
+					" ".repeat(i++);
 
 				if (config.isResizeImageUpdating) {
 					config.isResizeImageUpdating = false;
@@ -104,18 +94,14 @@ export class DrawioClientFactory {
 		const drawioClient = new CustomizedDrawioClient(
 			{
 				sendMessage: (msg) => {
-					if (isDev || this.config.verboseLogging) {
-						this.log.appendLine("vscode -> drawio: " + prettify(msg));
-					}
+					this.log.appendLine("vscode -> drawio: " + prettify(msg));
 					webview.postMessage(msg);
 				},
 				registerMessageHandler: (handler) => {
 					return webview.onDidReceiveMessage((msg) => {
-						if (isDev || this.config.verboseLogging) {
-							this.log.appendLine(
-								"vscode <- drawio: " + prettify(msg)
-							);
-						}
+						this.log.appendLine(
+							"vscode <- drawio: " + prettify(msg)
+						);
 						handler(msg);
 					});
 				},

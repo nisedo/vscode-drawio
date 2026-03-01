@@ -37,13 +37,11 @@ export class Extension {
 	);
 
 	constructor(private readonly context: vscode.ExtensionContext) {
-		const retainContextWhenHidden = this.config.retainContextWhenHidden;
-
 		this.dispose.track(
 			vscode.window.registerCustomEditorProvider(
 				"hediet.vscode-drawio-text",
 				new DrawioEditorProviderText(this.editorService),
-				{ webviewOptions: { retainContextWhenHidden } }
+				{ webviewOptions: { retainContextWhenHidden: true } }
 			)
 		);
 
@@ -53,7 +51,7 @@ export class Extension {
 				new DrawioEditorProviderBinary(this.editorService),
 				{
 					supportsMultipleEditorsPerDocument: false,
-					webviewOptions: { retainContextWhenHidden },
+					webviewOptions: { retainContextWhenHidden: true },
 				}
 			)
 		);
