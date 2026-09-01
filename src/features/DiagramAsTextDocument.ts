@@ -37,11 +37,15 @@ export class DiagramAsTextDocument {
 	}
 
 	public removeDuplicates(): void {
-		this.newVertices = this.newVertices.filter(
-			(vertex) =>
-				!this.vertexUpdates.some(
-					(existing) => existing.label === vertex.label
-				)
+		const labels = new Set(
+			this.vertexUpdates.map((vertex) => vertex.label)
 		);
+		this.newVertices = this.newVertices.filter((vertex) => {
+			if (labels.has(vertex.label)) {
+				return false;
+			}
+			labels.add(vertex.label);
+			return true;
+		});
 	}
 }

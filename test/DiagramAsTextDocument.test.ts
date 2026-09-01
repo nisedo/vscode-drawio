@@ -22,4 +22,15 @@ describe("DiagramAsTextDocument", () => {
 		]);
 		assert.deepEqual(document.newVertices, [{ label: "New" }]);
 	});
+
+	it("removes duplicate labels in one pass", () => {
+		const document = new DiagramAsTextDocument(
+			[{ id: "vertex-1", label: "Existing" }],
+			[{ label: "Existing" }, { label: "New" }, { label: "New" }]
+		);
+
+		document.removeDuplicates();
+
+		assert.deepEqual(document.newVertices, [{ label: "New" }]);
+	});
 });
