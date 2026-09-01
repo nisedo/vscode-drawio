@@ -21,8 +21,7 @@ Draw.loadPlugin((ui) => {
 		}
 
 		var cell: any | null = evt.getProperty("cell");
-		if (cell == null)
-			return;
+		if (cell == null) return;
 		const data = getLinkedData(cell);
 		const label = getLabelTextOfCell(cell);
 
@@ -92,7 +91,7 @@ Draw.loadPlugin((ui) => {
 		}
 
 		for (const a of [
-			...((newNode.attributes as any) as { name: string }[]),
+			...(newNode.attributes as any as { name: string }[]),
 		]) {
 			if (a.name.startsWith(prefix)) {
 				newNode.attributes.removeNamedItem(a.name);
@@ -209,7 +208,12 @@ Draw.loadPlugin((ui) => {
 				if (activeCell) {
 					const geo = graph.getCellGeometry(activeCell);
 					if (geo) {
-						geometry = { x: geo.x, y: geo.y, width: geo.width, height: geo.height };
+						geometry = {
+							x: geo.x,
+							y: geo.y,
+							width: geo.width,
+							height: geo.height,
+						};
 					}
 				}
 				sendEvent({
@@ -227,8 +231,12 @@ Draw.loadPlugin((ui) => {
 				const translate = view.translate;
 
 				// Calculate center of visible area
-				const centerX = (container.scrollLeft + container.clientWidth / 2) / scale - translate.x;
-				const centerY = (container.scrollTop + container.clientHeight / 2) / scale - translate.y;
+				const centerX =
+					(container.scrollLeft + container.clientWidth / 2) / scale -
+					translate.x;
+				const centerY =
+					(container.scrollTop + container.clientHeight / 2) / scale -
+					translate.y;
 
 				sendEvent({
 					event: "getViewCenter",
@@ -251,7 +259,10 @@ Draw.loadPlugin((ui) => {
 				const nodeSpacing = 10;
 				const headerHeight = 30;
 				const containerWidth = 300;
-				const containerHeight = headerHeight + (symbols.length * (nodeHeight + nodeSpacing)) + nodeSpacing;
+				const containerHeight =
+					headerHeight +
+					symbols.length * (nodeHeight + nodeSpacing) +
+					nodeSpacing;
 
 				graph.model.beginUpdate();
 				try {
