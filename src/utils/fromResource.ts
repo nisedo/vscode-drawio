@@ -1,7 +1,11 @@
 import { DisposableLike, dispose } from "@hediet/std/disposable";
 import { createAtom, _allowStateChanges } from "mobx";
 
-function invariant(condition: boolean, message?: string) {}
+function invariant(condition: boolean, message = "Invariant failed"): void {
+	if (!condition) {
+		throw new Error(message);
+	}
+}
 
 export function fromResource<T>(
 	subscriber: (sink: (newValue: T) => void) => DisposableLike
