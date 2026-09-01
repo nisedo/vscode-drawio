@@ -42,8 +42,7 @@
 -   Run `yarn build-extension` after extension-host changes.
 -   Run `yarn build-plugins` after webview-plugin changes.
 -   Run `yarn build` when a new VSIX is required.
--   Run `yarn tsc --noEmit -p drawio-custom-plugins/tsconfig.json` for plugin type checking.
--   The standalone root TypeScript check currently fails because its library configuration loads DOM-dependent Mithril types without the DOM library. Treat this as known technical debt until `tsconfig.json` is corrected.
+-   Run `yarn typecheck` after TypeScript changes. It checks both the extension host and webview plugins.
 -   Run Prettier in check mode on changed files. Do not reformat unrelated inherited files.
 -   This repository has no automated test suite. Manually open a `.drawio` file in an Extension Development Host for runtime changes. Test save, reopen, export, and the changed command or plugin behavior.
 -   A successful package build is not runtime proof. Report build checks and manual checks separately.

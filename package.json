@@ -503,6 +503,9 @@
 	},
 	"scripts": {
 		"postinstall": "git submodule update --init --recursive",
+		"typecheck": "yarn typecheck-extension && yarn typecheck-plugins",
+		"typecheck-extension": "tsc --noEmit -p tsconfig.json",
+		"typecheck-plugins": "tsc --noEmit -p drawio-custom-plugins/tsconfig.json",
 		"build": "yarn build-extension && yarn build-plugins && yarn package-extension",
 		"build-extension": "webpack --mode production",
 		"build-plugins": "webpack --mode production --config ./drawio-custom-plugins/webpack.config.ts",
