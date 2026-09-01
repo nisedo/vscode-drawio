@@ -545,7 +545,6 @@
 		"LICENSE.md"
 	],
 	"devDependencies": {
-		"@hediet/semver": "^0.2.1",
 		"@types/copy-webpack-plugin": "^8.0.1",
 		"@types/mithril": "^2.0.4",
 		"@types/node": "^22.10.10",
@@ -573,7 +572,6 @@
 		"js-sha256": "^0.9.0",
 		"mithril": "^2.0.4",
 		"mobx": "5.15.4",
-		"mobx-utils": "5.5.7",
 		"path-browserify": "^1.0.1",
 		"vsls": "^1.0.3015",
 		"xml-formatter": "^2.0.1",

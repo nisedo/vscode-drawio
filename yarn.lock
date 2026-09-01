@@ -215,17 +215,6 @@
     "@typescript-eslint/parser" "^3.0.1"
     eslint "^7.1.0"
 
-"@hediet/semver@^0.2.1":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@hediet/semver/-/semver-0.2.2.tgz#37fa17d2efa8d2462c9da5c4901da755149827c4"
-  integrity sha512-sdH+TwXwaYOgnKij3QQbJERl2HkJ+l8idWINwHBI+8nXl1yuTCMerDLDPC48t1wbr849qBTpJTV1EJXlh7OGAg==
-  dependencies:
-    "@actions/exec" "^1.0.4"
-    "@actions/github" "^2.2.0"
-    "@typescript-eslint/eslint-plugin" "^3.0.1"
-    "@typescript-eslint/parser" "^3.0.1"
-    eslint "^7.1.0"
-
 "@hediet/std@0.6.0":
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/@hediet/std/-/std-0.6.0.tgz#f7d2ffc1180ecef6ff272d0d6780f0c0d9337e4e"
@@ -4451,11 +4440,6 @@ mkdirp@^0.5.5:
   integrity sha512-NKmAlESf6jMGym1++R0Ra7wvhV+wFW63FaSOFPwRahvea0gMUcGUhVeAg/0BC0wiv9ih5NYPB1Wn1UEI1/L+xQ==
   dependencies:
     minimist "^1.2.5"
-
-mobx-utils@5.5.7:
-  version "5.5.7"
-  resolved "https://registry.yarnpkg.com/mobx-utils/-/mobx-utils-5.5.7.tgz#0ef58f2d5e05ca0e59ba2322f84f9c763de6ce14"
-  integrity sha512-jEtTe45gCXYtv3WTAyPiQUhQQRRDnx68WxgNn886i1B11ormsAey+gIJJkfh/cqSssBEWXcXwYTvODpGPN8Tgw==
 
 mobx@5.15.4:
   version "5.15.4"
