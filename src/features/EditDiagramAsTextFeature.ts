@@ -1,9 +1,14 @@
 import { Disposable } from "@hediet/std/disposable";
-import { workspace, commands, window, ViewColumn, TextDocument } from "vscode";
-import { DrawioEditorService, DrawioEditor } from "../DrawioEditorService";
+import { workspace, window, ViewColumn, TextDocument } from "vscode";
+import { DrawioEditorService } from "../DrawioEditorService";
 import { DrawioFileSystemController } from "../vscode-utils/VirtualFileSystemProvider";
 import { registerFailableCommand } from "../utils/registerFailableCommand";
 import { DiagramAsTextDocument } from "./DiagramAsTextDocument";
+import { DebouncedLatestTask } from "../utils/DebouncedLatestTask";
+
+interface TrackedDiagramTextDocument {
+	updateQueue: DebouncedLatestTask<string>;
+}
 
 export class EditDiagramAsTextFeature {
 	public readonly dispose = Disposable.fn();
@@ -11,25 +16,31 @@ export class EditDiagramAsTextFeature {
 		new DrawioFileSystemController()
 	);
 
-	private readonly trackedDocuments = new Map<TextDocument, DrawioEditor>();
+	private readonly trackedDocuments = new Map<
+		TextDocument,
+		TrackedDiagramTextDocument
+	>();
 
 	constructor(private readonly editorManager: DrawioEditorService) {
 		this.dispose.track({
-			dispose: () => this.trackedDocuments.clear(),
+			dispose: () => {
+				for (const tracked of this.trackedDocuments.values()) {
+					tracked.updateQueue.dispose();
+				}
+				this.trackedDocuments.clear();
+			},
 		});
 
 		this.dispose.track([
 			workspace.onDidChangeTextDocument((e) => {
-				const drawioEditor = this.trackedDocuments.get(e.document);
-				if (!drawioEditor) {
+				const tracked = this.trackedDocuments.get(e.document);
+				if (!tracked) {
 					return;
 				}
-
-				const doc = DiagramAsTextDocument.parse(e.document.getText());
-
-				drawioEditor.drawioClient.updateVertices(doc.vertexUpdates);
+				tracked.updateQueue.enqueue(e.document.getText());
 			}),
 			workspace.onDidCloseTextDocument((e) => {
+				this.trackedDocuments.get(e)?.updateQueue.dispose();
 				this.trackedDocuments.delete(e);
 			}),
 		]);
@@ -88,8 +99,16 @@ export class EditDiagramAsTextFeature {
 					}
 
 					const doc = await workspace.openTextDocument(file.uri);
-					this.trackedDocuments.set(doc, activeDrawioEditor);
-					const editor = await window.showTextDocument(doc, {
+					this.trackedDocuments.get(doc)?.updateQueue.dispose();
+					this.trackedDocuments.set(doc, {
+						updateQueue: new DebouncedLatestTask(async (text) => {
+							const parsed = DiagramAsTextDocument.parse(text);
+							activeDrawioEditor.drawioClient.updateVertices(
+								parsed.vertexUpdates
+							);
+						}, 100),
+					});
+					await window.showTextDocument(doc, {
 						viewColumn: ViewColumn.Beside,
 					});
 				}
