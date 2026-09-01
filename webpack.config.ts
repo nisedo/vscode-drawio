@@ -5,7 +5,10 @@ import * as CopyPlugin from "copy-webpack-plugin";
 
 const r = (file: string) => path.resolve(__dirname, file);
 
-module.exports = {
+module.exports = (
+	_env: unknown,
+	argv: { mode?: "development" | "production" }
+): webpack.Configuration => ({
 	entry: r("./src/index"),
 	output: {
 		path: r("./dist/extension"),
@@ -13,7 +16,7 @@ module.exports = {
 		libraryTarget: "commonjs2",
 		devtoolModuleFilenameTemplate: "../../[resource-path]",
 	},
-	devtool: "source-map",
+	devtool: argv.mode === "development" ? "source-map" : false,
 	externals: {
 		vscode: "commonjs vscode",
 	},
@@ -57,4 +60,4 @@ module.exports = {
 			],
 		}),
 	],
-} as webpack.Configuration;
+});

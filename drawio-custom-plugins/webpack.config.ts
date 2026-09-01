@@ -4,7 +4,10 @@ import { CleanWebpackPlugin } from "clean-webpack-plugin";
 
 const r = (file: string) => path.resolve(__dirname, file);
 
-module.exports = {
+module.exports = (
+	_env: unknown,
+	argv: { mode?: "development" | "production" }
+): webpack.Configuration => ({
 	target: "web",
 	entry: r("./src/index"),
 	output: {
@@ -13,7 +16,7 @@ module.exports = {
 		libraryTarget: "window",
 		devtoolModuleFilenameTemplate: "../[resource-path]",
 	},
-	devtool: "source-map",
+	devtool: argv.mode === "development" ? "source-map" : false,
 	externals: {
 		vscode: "commonjs vscode",
 	},
@@ -42,4 +45,4 @@ module.exports = {
 		__dirname: false,
 	},
 	plugins: [new CleanWebpackPlugin()],
-} as webpack.Configuration;
+});
