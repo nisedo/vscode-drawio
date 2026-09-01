@@ -1,4 +1,5 @@
 import { sendEvent } from "./vscode";
+import { CoalescedRunner } from "./CoalescedRunner";
 
 // Small black triangle SVG as data URI (6x6 pixels)
 const NOTE_INDICATOR_SVG = `data:image/svg+xml,${encodeURIComponent(`
@@ -8,7 +9,10 @@ const NOTE_INDICATOR_SVG = `data:image/svg+xml,${encodeURIComponent(`
 `)}`;
 
 // Track overlays per cell
-const cellOverlays = new Map<string, mxCellOverlay>();
+const cellOverlays = new Map<
+	string,
+	{ cell: DrawioCell; overlay: mxCellOverlay }
+>();
 
 Draw.loadPlugin((ui) => {
 	sendEvent({ event: "pluginLoaded", pluginId: "notes" });
@@ -71,9 +75,9 @@ Draw.loadPlugin((ui) => {
 		if (!cell) return;
 
 		const hasNote = !!getCellNote(cell);
-		const existingOverlay = cellOverlays.get(cell.id);
+		const existing = cellOverlays.get(cell.id);
 
-		if (hasNote && !existingOverlay) {
+		if (hasNote && !existing) {
 			// Add overlay
 			const image = new mxImage(NOTE_INDICATOR_SVG, 6, 6);
 			const overlay = new mxCellOverlay(
@@ -85,10 +89,10 @@ Draw.loadPlugin((ui) => {
 				"default"
 			);
 			graph.addCellOverlay(cell, overlay);
-			cellOverlays.set(cell.id, overlay);
-		} else if (!hasNote && existingOverlay) {
+			cellOverlays.set(cell.id, { cell, overlay });
+		} else if (!hasNote && existing) {
 			// Remove overlay
-			graph.removeCellOverlay(cell, existingOverlay);
+			graph.removeCellOverlay(existing.cell, existing.overlay);
 			cellOverlays.delete(cell.id);
 		}
 	}
@@ -98,6 +102,13 @@ Draw.loadPlugin((ui) => {
 	 */
 	function initializeOverlays(): void {
 		const cells = model.cells;
+		const liveCellIds = new Set(Object.keys(cells));
+		for (const [id, existing] of cellOverlays) {
+			if (!liveCellIds.has(id)) {
+				graph.removeCellOverlay(existing.cell, existing.overlay);
+				cellOverlays.delete(id);
+			}
+		}
 		for (const id in cells) {
 			const cell = cells[id];
 			if (model.isVertex(cell) || model.isEdge(cell)) {
@@ -143,7 +154,8 @@ Draw.loadPlugin((ui) => {
 		div.appendChild(textarea);
 
 		const buttonRow = document.createElement("div");
-		buttonRow.style.cssText = "display: flex; justify-content: flex-end; gap: 8px;";
+		buttonRow.style.cssText =
+			"display: flex; justify-content: flex-end; gap: 8px;";
 
 		const cancelBtn = document.createElement("button");
 		cancelBtn.textContent = mxResources.get("cancel") || "Cancel";
@@ -171,7 +183,12 @@ Draw.loadPlugin((ui) => {
 		textarea.addEventListener("keydown", (e) => {
 			if (e.key === "Escape") {
 				ui.hideDialog();
-			} else if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+			} else if (
+				e.key === "Enter" &&
+				!e.shiftKey &&
+				!e.ctrlKey &&
+				!e.metaKey
+			) {
 				e.preventDefault();
 				setCellNote(cell, textarea.value);
 				ui.hideDialog();
@@ -183,7 +200,11 @@ Draw.loadPlugin((ui) => {
 	 * Override the popup menu to add note menu items
 	 */
 	const originalFactoryMethod = graph.popupMenuHandler.factoryMethod;
-	graph.popupMenuHandler.factoryMethod = function(menu: mxPopupMenu, cell: DrawioCell | null, evt: Event) {
+	graph.popupMenuHandler.factoryMethod = function (
+		menu: mxPopupMenu,
+		cell: DrawioCell | null,
+		evt: Event
+	) {
 		// Call original method first
 		if (originalFactoryMethod) {
 			originalFactoryMethod.call(this, menu, cell, evt);
@@ -214,22 +235,53 @@ Draw.loadPlugin((ui) => {
 		}
 	};
 
-	// Initialize overlays after a short delay to ensure the graph is loaded
-	setTimeout(() => {
-		initializeOverlays();
-	}, 500);
+	let needsFullReconciliation = true;
+	const pendingCells = new Map<string, DrawioCell>();
+	const reconcile = new CoalescedRunner(() => {
+		if (needsFullReconciliation) {
+			initializeOverlays();
+		} else {
+			for (const cell of pendingCells.values()) {
+				updateNoteIndicator(cell);
+			}
+		}
+		needsFullReconciliation = false;
+		pendingCells.clear();
+	}, 100);
 
-	// Listen for model changes to update overlays
-	model.addListener(mxEvent.CHANGE, () => {
-		// Re-scan all cells for notes when the model changes
-		setTimeout(() => {
-			const cells = model.cells;
-			for (const id in cells) {
-				const cell = cells[id];
-				if (model.isVertex(cell) || model.isEdge(cell)) {
-					updateNoteIndicator(cell);
+	// Initialize overlays after Draw.io finishes loading the graph.
+	setTimeout(() => reconcile.schedule(), 500);
+
+	// Coalesce model transactions and update only cells exposed by known
+	// mxGraph change records. Unknown records use one safe full reconciliation.
+	model.addListener(mxEvent.CHANGE, (_sender: unknown, evt: any) => {
+		const changes = evt.getProperty?.("edit")?.changes;
+		if (!Array.isArray(changes)) {
+			needsFullReconciliation = true;
+			reconcile.schedule();
+			return;
+		}
+
+		for (const change of changes) {
+			let foundCell = false;
+			for (const candidate of [change.cell, change.child]) {
+				if (candidate?.id !== undefined) {
+					pendingCells.set(candidate.id, candidate);
+					foundCell = true;
 				}
 			}
-		}, 100);
+			if (Array.isArray(change.cells)) {
+				for (const cell of change.cells) {
+					if (cell?.id !== undefined) {
+						pendingCells.set(cell.id, cell);
+						foundCell = true;
+					}
+				}
+			}
+			if (!foundCell) {
+				needsFullReconciliation = true;
+			}
+		}
+		reconcile.schedule();
 	});
 });
