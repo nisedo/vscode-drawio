@@ -2,6 +2,7 @@ import { Uri, workspace, ConfigurationTarget, Disposable } from "vscode";
 import { fromResource } from "../utils/fromResource";
 import { computed, runInAction } from "mobx";
 import { EventEmitter } from "@hediet/std/events";
+import { resolveConfigurationTarget } from "./resolveConfigurationTarget";
 
 export interface Serializer<T> {
 	deserialize: (val: any) => T;
@@ -60,24 +61,16 @@ export class VsCodeSetting<T> {
 			target = this.target;
 		} else {
 			const result = c.inspect(this.id);
-			if (
-				result &&
-				[
-					result.workspaceFolderLanguageValue,
-					result.workspaceFolderValue,
-				].some((i) => i !== undefined)
-			) {
-				target = ConfigurationTarget.WorkspaceFolder;
-			}
-			if (
-				result &&
-				[result.workspaceLanguageValue, result.workspaceValue].some(
-					(i) => i !== undefined
-				)
-			) {
-				target = ConfigurationTarget.Workspace;
-			} else {
-				target = ConfigurationTarget.Global;
+			switch (resolveConfigurationTarget(result)) {
+				case "workspaceFolder":
+					target = ConfigurationTarget.WorkspaceFolder;
+					break;
+				case "workspace":
+					target = ConfigurationTarget.Workspace;
+					break;
+				case "global":
+					target = ConfigurationTarget.Global;
+					break;
 			}
 		}
 
