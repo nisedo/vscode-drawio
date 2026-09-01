@@ -8,6 +8,7 @@
 		"./src/**/*.ts",
 		"./drawio-custom-plugins/src/CoalescedRunner.ts",
 		"./drawio-custom-plugins/src/reconcileById.ts",
+		"./drawio-custom-plugins/src/ThrottledLatest.ts",
 		"./test/**/*.ts"
 	]
 }

@@ -1,6 +1,7 @@
 import { sendEvent } from "./vscode";
 import * as m from "mithril";
 import { reconcileById } from "./reconcileById";
+import { ThrottledLatest } from "./ThrottledLatest";
 
 Draw.loadPlugin((ui) => {
 	setTimeout(() => {
@@ -113,11 +114,27 @@ Draw.loadPlugin((ui) => {
 			return { x: x / scale - translate.x, y: y / scale - translate.y };
 		}
 
+		const bridgeIntervalMs = 33;
+		const cursorEvents = new ThrottledLatest<
+			CursorChangedEvent["position"]
+		>(bridgeIntervalMs, (position) => {
+			sendEvent({ event: "cursorChanged", position });
+		});
+		const rectangleEvents = new ThrottledLatest<
+			SelectionRectangleChangedEvent["rect"]
+		>(bridgeIntervalMs, (rect) => {
+			sendEvent({ event: "selectedRectangleChanged", rect });
+		});
+		window.addEventListener("beforeunload", () => {
+			cursorEvents.dispose();
+			rectangleEvents.dispose();
+		});
+
 		graph.addMouseListener({
 			mouseMove: (graph: DrawioGraph, event: mxMouseEvent) => {
 				const pos = { x: event.graphX, y: event.graphY };
 				const graphPos = transformBack(pos);
-				sendEvent({ event: "cursorChanged", position: graphPos });
+				cursorEvents.schedule(graphPos);
 			},
 			mouseDown: () => {},
 			mouseUp: () => {},
@@ -149,12 +166,9 @@ Draw.loadPlugin((ui) => {
 					second.y = temp;
 				}
 
-				sendEvent({
-					event: "selectedRectangleChanged",
-					rect: {
-						start: transformBack(first),
-						end: transformBack(second),
-					},
+				rectangleEvents.schedule({
+					start: transformBack(first),
+					end: transformBack(second),
 				});
 			};
 		});
@@ -163,10 +177,8 @@ Draw.loadPlugin((ui) => {
 			return function (...args: any[]) {
 				old.apply(this, args);
 
-				sendEvent({
-					event: "selectedRectangleChanged",
-					rect: undefined,
-				});
+				rectangleEvents.schedule(undefined);
+				rectangleEvents.flush();
 			};
 		});
 	});
