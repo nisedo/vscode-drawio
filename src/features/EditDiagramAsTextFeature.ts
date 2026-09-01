@@ -1,5 +1,4 @@
 import { Disposable } from "@hediet/std/disposable";
-import { Config } from "../Config";
 import { workspace, commands, window, ViewColumn, TextDocument } from "vscode";
 import { DrawioEditorService, DrawioEditor } from "../DrawioEditorService";
 import { DrawioFileSystemController } from "../vscode-utils/VirtualFileSystemProvider";
@@ -13,16 +12,10 @@ export class EditDiagramAsTextFeature {
 
 	private readonly trackedDocuments = new Map<TextDocument, DrawioEditor>();
 
-	constructor(
-		private readonly editorManager: DrawioEditorService,
-		config: Config
-	) {
+	constructor(private readonly editorManager: DrawioEditorService) {
 		this.dispose.track({
 			dispose: () => this.trackedDocuments.clear(),
 		});
-		if (!config.experimentalFeaturesEnabled) {
-			return;
-		}
 
 		this.dispose.track([
 			workspace.onDidChangeTextDocument((e) => {

@@ -19,9 +19,11 @@ import {
 } from "./vscode-utils/VsCodeSetting";
 import * as packageJson from "../package.json";
 import { Disposable } from "@hediet/std/disposable";
-
-const extensionId = "hediet.vscode-drawio";
-const experimentalFeaturesEnabled = "vscode-drawio.experimentalFeaturesEnabled";
+import {
+	experimentalFeaturesContextKey,
+	experimentalFeaturesSettingId,
+	extensionId,
+} from "./extensionIds";
 
 export async function setContext(
 	key: string,
@@ -65,7 +67,7 @@ export class Config {
 		this.dispose.track({
 			dispose: autorun(() => {
 				setContext(
-					experimentalFeaturesEnabled,
+					experimentalFeaturesContextKey,
 					this.experimentalFeaturesEnabled
 				);
 			}),
@@ -84,7 +86,7 @@ export class Config {
 	}
 
 	private readonly _experimentalFeatures = new VsCodeSetting(
-		`${extensionId}.enableExperimentalFeatures`,
+		experimentalFeaturesSettingId,
 		{
 			serializer: serializerWithDefault<boolean>(false),
 		}

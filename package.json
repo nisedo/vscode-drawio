@@ -249,6 +249,14 @@
 						"title": "Enable Page View by Default",
 						"description": "When enabled, new diagrams will show the page view (page boundaries) by default.",
 						"order": 81
+					},
+					"hediet.vscode-drawio.enableExperimentalFeatures": {
+						"type": "boolean",
+						"default": false,
+						"title": "Enable Experimental Features",
+						"description": "Enables experimental Draw.io extension features.",
+						"scope": "application",
+						"order": 90
 					}
 				}
 			},

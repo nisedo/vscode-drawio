@@ -31,7 +31,7 @@ export class Extension {
 		new LinkCodeWithSelectedNodeService(this.editorService, this.config)
 	);
 	private readonly editDiagramsAsTextFeature = this.dispose.track(
-		new EditDiagramAsTextFeature(this.editorService, this.config)
+		new EditDiagramAsTextFeature(this.editorService)
 	);
 	private readonly liveshareFeature = this.dispose.track(
 		new LiveshareFeature(this.editorService, this.config)
