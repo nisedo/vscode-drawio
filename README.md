@@ -63,19 +63,19 @@ This is a fork of [hediet/vscode-drawio](https://github.com/hediet/vscode-drawio
 
 ## Fork Changes Summary
 
-- **Shapes panel closed by default** - Cleaner initial view without the left sidebar ([6969ffd](https://github.com/nisedo/vscode-drawio/commit/6969ffd))
-- **Grid and Page View settings** - New settings `hediet.vscode-drawio.enableGrid` and `hediet.vscode-drawio.enablePageView` ([c429580](https://github.com/nisedo/vscode-drawio/commit/c429580))
-- **Elbow edge style by default** - Orthogonal connectors for cleaner diagrams ([2a46a24](https://github.com/nisedo/vscode-drawio/commit/2a46a24))
-- **Google Sheets-style notes** - Right-click nodes to insert/edit/delete notes with tooltip display and visual indicator ([9b99dd4](https://github.com/nisedo/vscode-drawio/commit/9b99dd4))
-- **Create Node from Symbol** - Command palette to create linked diagram nodes from code symbols ([b2ef148](https://github.com/nisedo/vscode-drawio/commit/b2ef148))
-- **Create Page from File** - Command to create a new diagram page with a container node and function nodes from the current file ([551aba4](https://github.com/nisedo/vscode-drawio/commit/551aba4))
-- **Export active page fix** - Export now exports the currently active page instead of always the first page ([50ede86](https://github.com/nisedo/vscode-drawio/commit/50ede86))
-- **Performance optimizations** - Debounced autosave, optimized logging, memory leak fixes ([e51dd46](https://github.com/nisedo/vscode-drawio/commit/e51dd46))
+- **Shapes panel closed by default** - Cleaner initial view without the left sidebar ([6969ffd](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/6969ffd))
+- **Grid and Page View settings** - New settings `hediet.vscode-drawio.enableGrid` and `hediet.vscode-drawio.enablePageView` ([c429580](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/c429580))
+- **Elbow edge style by default** - Orthogonal connectors for cleaner diagrams ([2a46a24](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/2a46a24))
+- **Google Sheets-style notes** - Right-click nodes to insert/edit/delete notes with tooltip display and visual indicator ([9b99dd4](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/9b99dd4))
+- **Create Node from Symbol** - Command palette to create linked diagram nodes from code symbols ([b2ef148](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/b2ef148))
+- **Create Page from File** - Command to create a new diagram page with a container node and function nodes from the current file ([551aba4](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/551aba4))
+- **Export active page fix** - Export now exports the currently active page instead of always the first page ([50ede86](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/50ede86))
+- **Performance optimizations** - Debounced autosave, optimized logging, memory leak fixes ([e51dd46](https://github.com/nisedo/vscode-drawio-nisedo-fork/commit/e51dd46))
 
 ## Install from Source
 
 ```bash
-git clone --recurse-submodules https://github.com/nisedo/vscode-drawio.git && cd vscode-drawio && yarn install && yarn build && code --install-extension ./dist/*.vsix
+git clone --recurse-submodules https://github.com/nisedo/vscode-drawio-nisedo-fork.git && cd vscode-drawio-nisedo-fork && yarn install && yarn build && code --install-extension ./dist/*.vsix
 ```
 
 Then reload VS Code to activate the extension.

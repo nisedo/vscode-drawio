@@ -8,7 +8,9 @@ import {
 } from "../src/extensionIds";
 
 interface ExtensionManifest {
+	version: string;
 	preRelease: boolean;
+	repository: { url: string };
 	scripts: Record<string, string>;
 	contributes: {
 		commands: { command: string; enablement?: string }[];
@@ -48,6 +50,14 @@ describe("extension packaging manifest", () => {
 		assert.equal(
 			manifest.scripts["package-extension"],
 			"yarn package-extension-stable"
+		);
+	});
+
+	it("identifies the fork release", () => {
+		assert.equal(manifest.version, "1.9.1");
+		assert.equal(
+			manifest.repository.url,
+			"https://github.com/nisedo/vscode-drawio-nisedo-fork.git"
 		);
 	});
 });

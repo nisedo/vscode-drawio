@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1]
+
+### Fixed
+
+- Serialized text-document synchronization and awaited pending updates before save.
+- Disposed editor, provider, Live Share, virtual file-system, and bridge resources.
+- Reconciled Live Share overlays by participant ID and removed stale overlays.
+- Added bounded Draw.io bridge request timeouts and disposal rejection.
+- Corrected scoped setting writes and experimental feature activation.
+- Corrected diagram-as-text parsing, serialization, and duplicate handling.
+
+### Performance
+
+- Coalesced note overlays and diagram text updates.
+- Throttled high-frequency Live Share cursor and selection events.
+- Scoped configuration invalidation to changed settings.
+- Disabled production bridge tracing and omitted production source maps.
+
+### Maintenance
+
+- Added repository guidance, unit tests, and full TypeScript checks.
+- Removed unused feedback tracking, debug logging, and dependencies.
+
 ## [1.9.0]
 
 ### Added
