@@ -3,6 +3,7 @@ import { workspace, commands, window, ViewColumn, TextDocument } from "vscode";
 import { DrawioEditorService, DrawioEditor } from "../DrawioEditorService";
 import { DrawioFileSystemController } from "../vscode-utils/VirtualFileSystemProvider";
 import { registerFailableCommand } from "../utils/registerFailableCommand";
+import { DiagramAsTextDocument } from "./DiagramAsTextDocument";
 
 export class EditDiagramAsTextFeature {
 	public readonly dispose = Disposable.fn();
@@ -93,53 +94,6 @@ export class EditDiagramAsTextFeature {
 					});
 				}
 			)
-		);
-	}
-}
-
-class DiagramAsTextDocument {
-	public static parse(src: string): DiagramAsTextDocument {
-		const lines = src.split("\n");
-
-		const vertexUpdates = new Array<{
-			id: string;
-			label: string;
-		}>();
-		const newVertices = new Array<{ label: string }>();
-
-		for (const line of lines) {
-			const m = line.match(/(.*):(.*)/);
-			if (!m) {
-				newVertices.push({ label: line });
-			} else {
-				vertexUpdates.push({ id: m[1], label: m[2] });
-			}
-		}
-
-		return new DiagramAsTextDocument(vertexUpdates, newVertices);
-	}
-
-	constructor(
-		public vertexUpdates: {
-			id: string;
-			label: string;
-		}[],
-		public newVertices: { label: string }[]
-	) {}
-
-	public toString(): string {
-		return (
-			this.vertexUpdates.map((n) => `${n.id}:${n.label}`).join("\n") +
-			this.newVertices.map((v) => v.label).join("\n")
-		);
-	}
-
-	public removeDuplicates(): void {
-		this.newVertices = this.newVertices.filter(
-			(v) =>
-				!this.vertexUpdates.some(
-					(existing) => existing.label === v.label
-				)
 		);
 	}
 }
