@@ -35,19 +35,42 @@ export class DrawioClient<
 	constructor(
 		private readonly messageStream: MessageStream,
 		private readonly getConfig: () => Promise<DrawioConfig>,
-		public readonly reloadWebview: () => void
+		public readonly reloadWebview: () => void,
+		private readonly requestOptions: DrawioClientRequestOptions = {}
 	) {
 		this.dispose.track(
 			messageStream.registerMessageHandler((msg) =>
 				this.handleEvent(JSON.parse(msg as string) as DrawioEvent)
 			)
 		);
+		this.dispose.track(
+			Disposable.create(() => {
+				const handlers = [...this.responseHandlers.values()];
+				this.responseHandlers.clear();
+				for (const handler of handlers) {
+					this.timerScheduler.clear(handler.timeout);
+					handler.reject(
+						new Error(
+							"Draw.io client was disposed before responding"
+						)
+					);
+				}
+			})
+		);
+	}
+
+	private get timerScheduler(): DrawioClientTimerScheduler {
+		return this.requestOptions.timerScheduler || defaultTimerScheduler;
 	}
 
 	private currentActionId = 0;
 	private responseHandlers = new Map<
 		string,
-		{ resolve: (response: DrawioEvent) => void; reject: () => void }
+		{
+			resolve: (response: DrawioEvent | TCustomEvent) => void;
+			reject: (error: Error) => void;
+			timeout: unknown;
+		}
 	>();
 
 	protected sendCustomAction(action: TCustomAction): void {
@@ -75,14 +98,30 @@ export class DrawioClient<
 	): Promise<DrawioEvent | TCustomEvent> {
 		return new Promise((resolve, reject) => {
 			const actionId = (this.currentActionId++).toString();
-
-			this.responseHandlers.set(actionId, {
-				resolve: (response) => {
+			const timeout = this.timerScheduler.set(() => {
+				const handler = this.responseHandlers.get(actionId);
+				if (!handler) {
+					return;
+				}
+				this.responseHandlers.delete(actionId);
+				handler.reject(
+					new Error(`Draw.io request ${actionId} timed out`)
+				);
+			}, this.requestOptions.responseTimeoutMs || 15_000);
+			const handler = {
+				resolve: (response: DrawioEvent | TCustomEvent) => {
 					this.responseHandlers.delete(actionId);
+					this.timerScheduler.clear(timeout);
 					resolve(response);
 				},
-				reject,
-			});
+				reject: (error: Error) => {
+					this.responseHandlers.delete(actionId);
+					this.timerScheduler.clear(timeout);
+					reject(error);
+				},
+				timeout,
+			};
+			this.responseHandlers.set(actionId, handler);
 
 			this.messageStream.sendMessage(
 				JSON.stringify(Object.assign(action, { actionId }))
@@ -139,7 +178,9 @@ export class DrawioClient<
 			this.responseHandlers.clear();
 			if (vals.length !== 1) {
 				for (const val of vals) {
-					val.reject();
+					val.reject(
+						new Error("Could not match Draw.io export response")
+					);
 				}
 			} else {
 				vals[0].resolve(drawioEvt);
@@ -282,3 +323,18 @@ export interface MessageStream {
 	registerMessageHandler(handler: (message: unknown) => void): Disposable;
 	sendMessage(message: unknown): void;
 }
+
+export interface DrawioClientTimerScheduler {
+	set(callback: () => void, delayMs: number): unknown;
+	clear(handle: unknown): void;
+}
+
+export interface DrawioClientRequestOptions {
+	responseTimeoutMs?: number;
+	timerScheduler?: DrawioClientTimerScheduler;
+}
+
+const defaultTimerScheduler: DrawioClientTimerScheduler = {
+	set: (callback, delayMs) => setTimeout(callback, delayMs),
+	clear: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+};
