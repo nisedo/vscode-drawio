@@ -94,14 +94,20 @@ export class DrawioClientFactory {
 		const drawioClient = new CustomizedDrawioClient(
 			{
 				sendMessage: (msg) => {
-					this.log.appendLine("vscode -> drawio: " + prettify(msg));
+					if (isDev) {
+						this.log.appendLine(
+							"vscode -> drawio: " + prettify(msg)
+						);
+					}
 					webview.postMessage(msg);
 				},
 				registerMessageHandler: (handler) => {
 					return webview.onDidReceiveMessage((msg) => {
-						this.log.appendLine(
-							"vscode <- drawio: " + prettify(msg)
-						);
+						if (isDev) {
+							this.log.appendLine(
+								"vscode <- drawio: " + prettify(msg)
+							);
+						}
 						handler(msg);
 					});
 				},
@@ -341,21 +347,6 @@ export interface DrawioClientOptions {
 const isDev = process.env.DEV === "1";
 
 function prettify(msg: unknown): string {
-	// Skip expensive formatting in production for performance
-	if (!isDev) {
-		if (typeof msg === "string") {
-			// Just show message type without parsing
-			const typeMatch = msg.match(/"(?:event|action)"\s*:\s*"([^"]+)"/);
-			return typeMatch ? `{${typeMatch[0]}...}` : "(message)";
-		}
-		const obj = msg as any;
-		return obj?.event
-			? `{event:"${obj.event}"...}`
-			: obj?.action
-			? `{action:"${obj.action}"...}`
-			: "(message)";
-	}
-	// Full formatting only in dev mode
 	try {
 		if (typeof msg === "string") {
 			const obj = JSON.parse(msg as string);
