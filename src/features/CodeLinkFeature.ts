@@ -36,8 +36,7 @@ const linkFileWithSelectedNodeCommandName =
 	"hediet.vscode-drawio.linkFileWithSelectedNode";
 const createNodeFromSymbolCommandName =
 	"hediet.vscode-drawio.createNodeFromSymbol";
-const createPageFromFileCommandName =
-	"hediet.vscode-drawio.createPageFromFile";
+const createPageFromFileCommandName = "hediet.vscode-drawio.createPageFromFile";
 
 const symbolNameMap: Record<SymbolKind, string> = {
 	[SymbolKind.File]: "symbol-file",
@@ -71,7 +70,9 @@ const symbolNameMap: Record<SymbolKind, string> = {
 export class LinkCodeWithSelectedNodeService {
 	public readonly dispose = Disposable.fn();
 
-	private readonly statusBar = window.createStatusBarItem();
+	private readonly statusBar = this.dispose.track(
+		window.createStatusBarItem()
+	);
 
 	private lastActiveTextEditor: TextEditor | undefined =
 		window.activeTextEditor;
@@ -80,6 +81,12 @@ export class LinkCodeWithSelectedNodeService {
 		private readonly editorManager: DrawioEditorService,
 		private readonly config: Config
 	) {
+		this.dispose.track({
+			dispose: () => {
+				this.lastDecorationType?.dispose();
+				this.lastDecorationType = undefined;
+			},
+		});
 		this.dispose.track([
 			editorManager.onEditorOpened.sub(({ editor }) =>
 				this.handleDrawioEditor(editor)
@@ -207,13 +214,17 @@ export class LinkCodeWithSelectedNodeService {
 		const lastActiveDrawioEditor =
 			this.editorManager.lastActiveDrawioEditor;
 		if (!lastActiveDrawioEditor) {
-			window.showErrorMessage("No active Draw.io editor. Open a diagram first.");
+			window.showErrorMessage(
+				"No active Draw.io editor. Open a diagram first."
+			);
 			return;
 		}
 
 		const editor = window.activeTextEditor;
 		if (!editor) {
-			window.showErrorMessage("No text editor active. Open a code file first.");
+			window.showErrorMessage(
+				"No text editor active. Open a code file first."
+			);
 			return;
 		}
 
@@ -234,7 +245,8 @@ export class LinkCodeWithSelectedNodeService {
 		const items: QuickPickItem[] = [];
 		function recurse(symb: DocumentSymbol[], symbolPath: string) {
 			for (const x of symb) {
-				const curpath = symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
+				const curpath =
+					symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
 				items.push({
 					label: `$(${symbolNameMap[x.kind]}) ${x.name}`,
 					description: x.detail,
@@ -249,7 +261,9 @@ export class LinkCodeWithSelectedNodeService {
 		const selected = await window.showQuickPick(items, {
 			matchOnDescription: true,
 			matchOnDetail: true,
-			placeHolder: `Create node from symbol in ${path.basename(uri.fsPath)}`,
+			placeHolder: `Create node from symbol in ${path.basename(
+				uri.fsPath
+			)}`,
 		});
 
 		if (!selected) {
@@ -264,7 +278,8 @@ export class LinkCodeWithSelectedNodeService {
 		let x = 50;
 		let y = 50;
 		try {
-			const center = await lastActiveDrawioEditor.drawioClient.getViewCenter();
+			const center =
+				await lastActiveDrawioEditor.drawioClient.getViewCenter();
 			// Offset so the node is centered (node size is 120x60)
 			x = center.x - 60;
 			y = center.y - 30;
@@ -276,17 +291,20 @@ export class LinkCodeWithSelectedNodeService {
 		const fileName = path.basename(uri.fsPath);
 		// Get just the symbol name (last part of the path, without class prefix)
 		// and remove any trailing metadata in parentheses (e.g., "( complex: 11 state: ☑ )")
-		const fullPath = selected.detail || selected.label.replace(/^\$\([^)]+\)\s*/, '');
-		const parts = fullPath.split('.');
+		const fullPath =
+			selected.detail || selected.label.replace(/^\$\([^)]+\)\s*/, "");
+		const parts = fullPath.split(".");
 		let symbolName = parts[parts.length - 1]; // Get last part (e.g., "❗️💰 onInstall" from "ECDSAValidator.❗️💰 onInstall")
-		symbolName = symbolName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+		symbolName = symbolName.replace(/\s*\([^)]*\)\s*$/, "").trim();
 		const label = `${fileName}\n${symbolName}`;
-		lastActiveDrawioEditor.drawioClient.addVertices([{
-			label,
-			linkedData: serializedData,
-			x,
-			y,
-		}]);
+		lastActiveDrawioEditor.drawioClient.addVertices([
+			{
+				label,
+				linkedData: serializedData,
+				x,
+				y,
+			},
+		]);
 	}
 
 	@action.bound
@@ -294,13 +312,17 @@ export class LinkCodeWithSelectedNodeService {
 		const lastActiveDrawioEditor =
 			this.editorManager.lastActiveDrawioEditor;
 		if (!lastActiveDrawioEditor) {
-			window.showErrorMessage("No active Draw.io editor. Open a diagram first.");
+			window.showErrorMessage(
+				"No active Draw.io editor. Open a diagram first."
+			);
 			return;
 		}
 
 		const editor = window.activeTextEditor;
 		if (!editor) {
-			window.showErrorMessage("No text editor active. Open a code file first.");
+			window.showErrorMessage(
+				"No text editor active. Open a code file first."
+			);
 			return;
 		}
 
@@ -319,12 +341,21 @@ export class LinkCodeWithSelectedNodeService {
 		}
 
 		// Filter to only functions, methods, and constructors
-		const functionKinds = [SymbolKind.Function, SymbolKind.Method, SymbolKind.Constructor];
-		const symbols: { label: string; linkedData: unknown; symbolPath: string }[] = [];
+		const functionKinds = [
+			SymbolKind.Function,
+			SymbolKind.Method,
+			SymbolKind.Constructor,
+		];
+		const symbols: {
+			label: string;
+			linkedData: unknown;
+			symbolPath: string;
+		}[] = [];
 
 		function collectFunctions(symb: DocumentSymbol[], symbolPath: string) {
 			for (const x of symb) {
-				const curPath = symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
+				const curPath =
+					symbolPath === "" ? x.name : `${symbolPath}.${x.name}`;
 				if (functionKinds.includes(x.kind)) {
 					symbols.push({
 						label: x.name,
@@ -339,7 +370,9 @@ export class LinkCodeWithSelectedNodeService {
 		collectFunctions(result, "");
 
 		if (symbols.length === 0) {
-			window.showErrorMessage("No functions or methods found in the current file.");
+			window.showErrorMessage(
+				"No functions or methods found in the current file."
+			);
 			return;
 		}
 
@@ -348,7 +381,7 @@ export class LinkCodeWithSelectedNodeService {
 		const fileLinkedData = filePos.serialize(lastActiveDrawioEditor.uri);
 
 		// Create CodePosition for each symbol
-		const symbolsWithLinkedData = symbols.map(s => {
+		const symbolsWithLinkedData = symbols.map((s) => {
 			const pos = new CodePosition(uri, s.symbolPath);
 			return {
 				label: s.label,
@@ -363,7 +396,9 @@ export class LinkCodeWithSelectedNodeService {
 			symbolsWithLinkedData
 		);
 
-		window.showInformationMessage(`Created page "${fileName}" with ${symbols.length} function(s).`);
+		window.showInformationMessage(
+			`Created page "${fileName}" with ${symbols.length} function(s).`
+		);
 	}
 
 	@action.bound
@@ -449,49 +484,53 @@ export class LinkCodeWithSelectedNodeService {
 	private handleDrawioEditor(editor: DrawioEditor): void {
 		const drawioInstance = editor.drawioClient;
 
-		drawioInstance.onCustomPluginLoaded.sub(() => {
-			drawioInstance.dispose.track({
-				dispose: autorun(
-					() => {
-						drawioInstance.setNodeSelectionEnabled(
-							editor.config.codeLinkActivated
-						);
-					},
-					{ name: "Send codeLinkActivated to drawio instance" }
-				),
-			});
-		});
+		drawioInstance.dispose.track(
+			drawioInstance.onCustomPluginLoaded.sub(() => {
+				drawioInstance.dispose.track({
+					dispose: autorun(
+						() => {
+							drawioInstance.setNodeSelectionEnabled(
+								editor.config.codeLinkActivated
+							);
+						},
+						{ name: "Send codeLinkActivated to drawio instance" }
+					),
+				});
+			})
+		);
 
-		drawioInstance.onNodeSelected.sub(async ({ linkedData, label }) => {
-			if (!editor.config.codeLinkActivated) {
-				return;
-			}
-
-			if (linkedData) {
-				try {
-					const pos = await CodePosition.deserialize(
-						linkedData,
-						editor.uri
-					);
-					await this.revealSelection(pos);
-				} catch (e) {
-					window.showErrorMessage((e as Error).message);
+		drawioInstance.dispose.track(
+			drawioInstance.onNodeSelected.sub(async ({ linkedData, label }) => {
+				if (!editor.config.codeLinkActivated) {
+					return;
 				}
-			} else {
-				const match = label.match(/#([a-zA-Z0-9_<>,]+)/);
-				if (match) {
-					const symbolName = match[1];
-					const pos = await resolveWorkspaceSymbol(symbolName);
-					if (pos) {
-						await this.revealSelection(pos);
-					} else {
-						window.showErrorMessage(
-							`No symbol found with name "${symbolName}". Maybe you need to load the symbols by opening at least one of its code files?`
+
+				if (linkedData) {
+					try {
+						const pos = await CodePosition.deserialize(
+							linkedData,
+							editor.uri
 						);
+						await this.revealSelection(pos);
+					} catch (e) {
+						window.showErrorMessage((e as Error).message);
+					}
+				} else {
+					const match = label.match(/#([a-zA-Z0-9_<>,]+)/);
+					if (match) {
+						const symbolName = match[1];
+						const pos = await resolveWorkspaceSymbol(symbolName);
+						if (pos) {
+							await this.revealSelection(pos);
+						} else {
+							window.showErrorMessage(
+								`No symbol found with name "${symbolName}". Maybe you need to load the symbols by opening at least one of its code files?`
+							);
+						}
 					}
 				}
-			}
-		});
+			})
+		);
 	}
 
 	private lastDecorationType: TextEditorDecorationType | undefined;

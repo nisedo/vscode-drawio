@@ -17,6 +17,9 @@ export class EditDiagramAsTextFeature {
 		private readonly editorManager: DrawioEditorService,
 		config: Config
 	) {
+		this.dispose.track({
+			dispose: () => this.trackedDocuments.clear(),
+		});
 		if (!config.experimentalFeaturesEnabled) {
 			return;
 		}
@@ -73,19 +76,21 @@ export class EditDiagramAsTextFeature {
 					await updateFile();
 
 					if (!didFileExist) {
-						file.onDidChangeFile(async () => {
-							if (isUpdating) {
-								return;
-							}
-							const doc = DiagramAsTextDocument.parse(
-								file.readString()
-							);
-							doc.removeDuplicates();
-							activeDrawioEditor.drawioClient.addVertices(
-								doc.newVertices
-							);
-							await updateFile();
-						});
+						this.dispose.track(
+							file.onDidChangeFile(async () => {
+								if (isUpdating) {
+									return;
+								}
+								const doc = DiagramAsTextDocument.parse(
+									file.readString()
+								);
+								doc.removeDuplicates();
+								activeDrawioEditor.drawioClient.addVertices(
+									doc.newVertices
+								);
+								await updateFile();
+							})
+						);
 					}
 
 					const doc = await workspace.openTextDocument(file.uri);

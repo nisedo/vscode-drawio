@@ -20,7 +20,7 @@ export class DrawioClientFactory {
 		private readonly config: Config,
 		private readonly log: OutputChannel,
 		private readonly extensionUri: Uri
-	) { }
+	) {}
 
 	public async createDrawioClientInWebview(
 		uri: Uri,
@@ -134,12 +134,14 @@ export class DrawioClientFactory {
 			}
 		);
 
-		drawioClient.onUnknownMessage.sub(({ message }) => {
-			if (message.event === "updateLocalStorage") {
-				const newLocalStorage = message.newLocalStorage;
-				config.setLocalStorage(newLocalStorage);
-			}
-		});
+		drawioClient.dispose.track(
+			drawioClient.onUnknownMessage.sub(({ message }) => {
+				if (message.event === "updateLocalStorage") {
+					const newLocalStorage = message.newLocalStorage;
+					config.setLocalStorage(newLocalStorage);
+				}
+			})
+		);
 
 		webviewPanel.onDidDispose(() => {
 			if (updateTimeout) {
@@ -267,8 +269,14 @@ export class DrawioClientFactory {
 		// Prevent injection attacks by using JSON.stringify.
 		const patchedHtml = html
 			.replace(/\$\$literal-vsuri\$\$/g, vsuri.toString())
-			.replace("$$theme$$", JSON.stringify(config.resolvedTheme.themeName))
-			.replace("$$appearance$$", JSON.stringify(config.resolvedTheme.getAppearanceDrawioValue()))
+			.replace(
+				"$$theme$$",
+				JSON.stringify(config.resolvedTheme.themeName)
+			)
+			.replace(
+				"$$appearance$$",
+				JSON.stringify(config.resolvedTheme.getAppearanceDrawioValue())
+			)
 			.replace("$$lang$$", JSON.stringify(config.drawioLanguage))
 			.replace("$$simpleLabels$$", JSON.stringify(config.simpleLabels))
 			.replace(
@@ -341,7 +349,11 @@ function prettify(msg: unknown): string {
 			return typeMatch ? `{${typeMatch[0]}...}` : "(message)";
 		}
 		const obj = msg as any;
-		return obj?.event ? `{event:"${obj.event}"...}` : obj?.action ? `{action:"${obj.action}"...}` : "(message)";
+		return obj?.event
+			? `{event:"${obj.event}"...}`
+			: obj?.action
+			? `{action:"${obj.action}"...}`
+			: "(message)";
 	}
 	// Full formatting only in dev mode
 	try {
@@ -350,6 +362,6 @@ function prettify(msg: unknown): string {
 			return formatValue(obj, 500);
 		}
 		return formatValue(msg, 500);
-	} catch { }
+	} catch {}
 	return "" + msg;
 }

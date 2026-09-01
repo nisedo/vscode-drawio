@@ -15,7 +15,7 @@ import { BufferImpl } from "../utils/buffer";
 export class DrawioFileSystemController {
 	public readonly dispose = Disposable.fn();
 
-	private readonly fs = new VirtualFileSystemProvider();
+	private readonly fs = this.dispose.track(new VirtualFileSystemProvider());
 	public readonly scheme = "drawio";
 
 	constructor() {
@@ -42,7 +42,10 @@ export class DrawioFileSystemController {
 }
 
 export class VirtualFileSystemProvider implements FileSystemProvider {
-	private fileChangedEmitter = new EventEmitter<FileChangeEvent[]>();
+	public readonly dispose = Disposable.fn();
+	private fileChangedEmitter = this.dispose.track(
+		new EventEmitter<FileChangeEvent[]>()
+	);
 	public readonly onDidChangeFile = this.fileChangedEmitter.event;
 
 	private readonly files = new Map<string, File>();
@@ -56,10 +59,13 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
 		}
 
 		const newFile = new File(uri, Uint8Array.from([]));
-		newFile.onDidChangeFile(() =>
-			this.fileChangedEmitter.fire([
-				{ type: FileChangeType.Changed, uri: newFile.uri },
-			])
+		this.dispose.track(newFile);
+		this.dispose.track(
+			newFile.onDidChangeFile(() =>
+				this.fileChangedEmitter.fire([
+					{ type: FileChangeType.Changed, uri: newFile.uri },
+				])
+			)
 		);
 		this.files.set(key, newFile);
 		return { file: newFile, didFileExist: false };
@@ -120,7 +126,10 @@ export class VirtualFileSystemProvider implements FileSystemProvider {
 }
 
 export class File {
-	private readonly fileChangedEmitter = new EventEmitter();
+	public readonly dispose = Disposable.fn();
+	private readonly fileChangedEmitter = this.dispose.track(
+		new EventEmitter()
+	);
 	public readonly onDidChangeFile = this.fileChangedEmitter.event;
 
 	constructor(public readonly uri: Uri, public data: Uint8Array) {}

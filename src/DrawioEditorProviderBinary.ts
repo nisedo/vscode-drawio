@@ -17,13 +17,17 @@ import { CustomizedDrawioClient } from "./DrawioClient";
 import { extname } from "path";
 import { DrawioEditorService } from "./DrawioEditorService";
 import { BufferImpl } from "./utils/buffer";
+import { Disposable } from "@hediet/std/disposable";
 
 export class DrawioEditorProviderBinary
 	implements CustomEditorProvider<DrawioBinaryDocument>
 {
-	private readonly onDidChangeCustomDocumentEmitter = new EventEmitter<
-		CustomDocumentContentChangeEvent<DrawioBinaryDocument>
-	>();
+	public readonly dispose = Disposable.fn();
+	private readonly onDidChangeCustomDocumentEmitter = this.dispose.track(
+		new EventEmitter<
+			CustomDocumentContentChangeEvent<DrawioBinaryDocument>
+		>()
+	);
 
 	public readonly onDidChangeCustomDocument =
 		this.onDidChangeCustomDocumentEmitter.event;
@@ -102,10 +106,15 @@ export class DrawioEditorProviderBinary
 }
 
 export class DrawioBinaryDocument implements CustomDocument {
-	private readonly onChangeEmitter = new EventEmitter<void>();
+	public readonly dispose = Disposable.fn();
+	private readonly onChangeEmitter = this.dispose.track(
+		new EventEmitter<void>()
+	);
 	public readonly onChange = this.onChangeEmitter.event;
 
-	private readonly onInstanceSaveEmitter = new EventEmitter<void>();
+	private readonly onInstanceSaveEmitter = this.dispose.track(
+		new EventEmitter<void>()
+	);
 	public readonly onInstanceSave = this.onInstanceSaveEmitter.event;
 
 	private _drawioClient: CustomizedDrawioClient | undefined;
@@ -132,29 +141,35 @@ export class DrawioBinaryDocument implements CustomDocument {
 		}
 		this._drawioClient = drawioClient;
 
-		drawioClient.onInit.sub(async () => {
-			if (this.currentXml) {
-				this.drawioClient.loadXmlLike(this.currentXml);
-			} else if (this.backupId) {
-				const backupFile = Uri.parse(this.backupId);
-				const content = await workspace.fs.readFile(backupFile);
-				const xml = BufferImpl.from(content).toString("utf-8");
-				await this.drawioClient.loadXmlLike(xml);
-				this._isDirty = true; // because of backup
-			} else {
-				this.loadFromDisk();
-			}
-		});
+		this.dispose.track(
+			drawioClient.onInit.sub(async () => {
+				if (this.currentXml) {
+					await this.drawioClient.loadXmlLike(this.currentXml);
+				} else if (this.backupId) {
+					const backupFile = Uri.parse(this.backupId);
+					const content = await workspace.fs.readFile(backupFile);
+					const xml = BufferImpl.from(content).toString("utf-8");
+					await this.drawioClient.loadXmlLike(xml);
+					this._isDirty = true; // because of backup
+				} else {
+					await this.loadFromDisk();
+				}
+			})
+		);
 
-		drawioClient.onChange.sub((change) => {
-			this.currentXml = change.newXml;
-			this._isDirty = true;
-			this.onChangeEmitter.fire();
-		});
+		this.dispose.track(
+			drawioClient.onChange.sub((change) => {
+				this.currentXml = change.newXml;
+				this._isDirty = true;
+				this.onChangeEmitter.fire();
+			})
+		);
 
-		drawioClient.onSave.sub((change) => {
-			this.onInstanceSaveEmitter.fire();
-		});
+		this.dispose.track(
+			drawioClient.onSave.sub(() => {
+				this.onInstanceSaveEmitter.fire();
+			})
+		);
 	}
 
 	public async loadFromDisk(): Promise<void> {
@@ -193,9 +208,5 @@ export class DrawioBinaryDocument implements CustomDocument {
 				}
 			},
 		};
-	}
-
-	public dispose(): void {
-		// no op
 	}
 }

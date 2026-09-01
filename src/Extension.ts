@@ -16,15 +16,16 @@ export class Extension {
 		vscode.window.createOutputChannel("Drawio Integration Log")
 	);
 
-	private readonly config = new Config(this.context.globalState);
+	private readonly config = this.dispose.track(
+		new Config(this.context.globalState)
+	);
 	private readonly drawioClientFactory = new DrawioClientFactory(
 		this.config,
 		this.log,
 		this.context.extensionUri
 	);
-	private readonly editorService = new DrawioEditorService(
-		this.config,
-		this.drawioClientFactory
+	private readonly editorService = this.dispose.track(
+		new DrawioEditorService(this.config, this.drawioClientFactory)
 	);
 	private readonly linkCodeWithSelectedNodeService = this.dispose.track(
 		new LinkCodeWithSelectedNodeService(this.editorService, this.config)
@@ -37,6 +38,9 @@ export class Extension {
 	);
 
 	constructor(private readonly context: vscode.ExtensionContext) {
+		const binaryProvider = this.dispose.track(
+			new DrawioEditorProviderBinary(this.editorService)
+		);
 		this.dispose.track(
 			vscode.window.registerCustomEditorProvider(
 				"hediet.vscode-drawio-text",
@@ -48,7 +52,7 @@ export class Extension {
 		this.dispose.track(
 			vscode.window.registerCustomEditorProvider(
 				"hediet.vscode-drawio",
-				new DrawioEditorProviderBinary(this.editorService),
+				binaryProvider,
 				{
 					supportsMultipleEditorsPerDocument: false,
 					webviewOptions: { retainContextWhenHidden: true },
@@ -71,7 +75,10 @@ export class Extension {
 
 					const rootFolder = workspaceFolders[0].uri;
 					const repoName = workspaceFolders[0].name;
-					const targetUri = vscode.Uri.joinPath(rootFolder, `${repoName}.drawio`);
+					const targetUri = vscode.Uri.joinPath(
+						rootFolder,
+						`${repoName}.drawio`
+					);
 
 					try {
 						// Check if file already exists

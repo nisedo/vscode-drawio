@@ -39,27 +39,29 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 			let lastDocumentText = document.getText();
 			let isThisEditorSaving = false;
 
-			workspace.onDidChangeTextDocument(async (evt) => {
-				if (evt.document !== document) {
-					return;
-				}
-				if (isThisEditorSaving) {
-					// We don't want to process our own changes.
-					return;
-				}
-				if (evt.contentChanges.length === 0) {
-					// Sometimes VS Code reports a document change without a change.
-					return;
-				}
+			editor.dispose.track(
+				workspace.onDidChangeTextDocument(async (evt) => {
+					if (evt.document !== document) {
+						return;
+					}
+					if (isThisEditorSaving) {
+						// We don't want to process our own changes.
+						return;
+					}
+					if (evt.contentChanges.length === 0) {
+						// Sometimes VS Code reports a document change without a change.
+						return;
+					}
 
-				const newText = evt.document.getText();
-				if (newText === lastDocumentText) {
-					return;
-				}
-				lastDocumentText = newText;
+					const newText = evt.document.getText();
+					if (newText === lastDocumentText) {
+						return;
+					}
+					lastDocumentText = newText;
 
-				await drawioClient.mergeXmlLike(newText);
-			});
+					await drawioClient.mergeXmlLike(newText);
+				})
+			);
 
 			// A single queue coalesces bursts and prevents older async writes from
 			// completing after newer writes.
@@ -135,20 +137,26 @@ export class DrawioEditorProviderText implements CustomTextEditorProvider {
 				},
 				100
 			);
-			webviewPanel.onDidDispose(() => processXmlChange.dispose());
+			editor.dispose.track(processXmlChange);
 
-			drawioClient.onChange.sub(({ newXml }) => {
-				processXmlChange.enqueue(newXml);
-			});
+			editor.dispose.track(
+				drawioClient.onChange.sub(({ newXml }) => {
+					processXmlChange.enqueue(newXml);
+				})
+			);
 
-			drawioClient.onSave.sub(async () => {
-				await processXmlChange.flush();
-				await document.save();
-			});
+			editor.dispose.track(
+				drawioClient.onSave.sub(async () => {
+					await processXmlChange.flush();
+					await document.save();
+				})
+			);
 
-			drawioClient.onInit.sub(async () => {
-				drawioClient.loadXmlLike(document.getText());
-			});
+			editor.dispose.track(
+				drawioClient.onInit.sub(async () => {
+					await drawioClient.loadXmlLike(document.getText());
+				})
+			);
 		} catch (e) {
 			window.showErrorMessage(`Failed to open diagram: ${e}`);
 			throw e;

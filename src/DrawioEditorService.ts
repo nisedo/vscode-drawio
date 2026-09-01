@@ -4,12 +4,14 @@ import { autorun, computed, observable, ObservableSet } from "mobx";
 import { extname } from "path";
 import {
 	commands,
-	QuickPickItem, QuickPickItemKind, StatusBarAlignment,
+	QuickPickItem,
+	QuickPickItemKind,
+	StatusBarAlignment,
 	TextDocument,
 	Uri,
 	WebviewPanel,
 	window,
-	workspace
+	workspace,
 } from "vscode";
 import { Config, DiagramConfig, ResolvedDrawioTheme } from "./Config";
 import {
@@ -50,16 +52,18 @@ export class DrawioEditorService {
 		private readonly config: Config,
 		private readonly drawioClientFactory: DrawioClientFactory
 	) {
-		autorun(() => {
-			const a = this.activeDrawioEditor;
-			if (a) {
-				this._lastActiveDrawioEditor = a;
-			}
-			commands.executeCommand(
-				"setContext",
-				"hediet.vscode-drawio.active",
-				!!a
-			);
+		this.dispose.track({
+			dispose: autorun(() => {
+				const a = this.activeDrawioEditor;
+				if (a) {
+					this._lastActiveDrawioEditor = a;
+				}
+				commands.executeCommand(
+					"setContext",
+					"hediet.vscode-drawio.active",
+					!!a
+				);
+			}),
 		});
 
 		this.dispose.track(
@@ -149,6 +153,7 @@ export class DrawioEditorService {
 
 		editor.webviewPanel.onDidDispose(() => {
 			this.openedEditors.delete(editor);
+			editor.dispose();
 		});
 
 		return editor;
@@ -212,15 +217,17 @@ export class DrawioEditor {
 			})
 		);
 
-		drawioClient.onInvokeCommand.sub(({ command }) => {
-			if (command === "convert") {
-				this.handleConvertCommand();
-			} else if (command === "export") {
-				this.handleExportCommand();
-			} else if (command === "save") {
-				this.drawioClient.triggerOnSave();
-			}
-		});
+		this.dispose.track(
+			drawioClient.onInvokeCommand.sub(({ command }) => {
+				if (command === "convert") {
+					this.handleConvertCommand();
+				} else if (command === "export") {
+					this.handleExportCommand();
+				} else if (command === "save") {
+					this.drawioClient.triggerOnSave();
+				}
+			})
+		);
 	}
 
 	public get isActive(): boolean {
@@ -336,15 +343,26 @@ export class DrawioEditor {
 	public async handleChangeThemeCommand(): Promise<void> {
 		const originalTheme = this.config.theme;
 		const originalAppearance = this.config.appearance;
-		const availableThemes = withFirstUnique(ResolvedDrawioTheme.getThemeNames(), originalTheme);
+		const availableThemes = withFirstUnique(
+			ResolvedDrawioTheme.getThemeNames(),
+			originalTheme
+		);
 
-		const availableOptions: (QuickPickItem & { onSelect?: (preview: boolean) => void })[] = [];
+		const availableOptions: (QuickPickItem & {
+			onSelect?: (preview: boolean) => void;
+		})[] = [];
 
 		const curVsCodeAppearance = this.config.getVsCodeAppearance();
 
-		const appearances = withFirstUnique(["automatic", "light", "dark"], originalAppearance);
+		const appearances = withFirstUnique(
+			["automatic", "light", "dark"],
+			originalAppearance
+		);
 		for (const appearance of appearances) {
-			const appearanceLabel = appearance === "automatic" ? `always match VS Code theme '${curVsCodeAppearance}'` : appearance;
+			const appearanceLabel =
+				appearance === "automatic"
+					? `always match VS Code theme '${curVsCodeAppearance}'`
+					: appearance;
 
 			availableOptions.push({
 				kind: QuickPickItemKind.Separator,
@@ -356,18 +374,15 @@ export class DrawioEditor {
 					onSelect: () => {
 						this.config.setTheme(theme);
 						this.config.setAppearance(appearance);
-					}
+					},
 				});
 			}
 		}
-		const result = await window.showQuickPick(
-			availableOptions,
-			{
-				onDidSelectItem: async (item) => {
-					(item as any).onSelect(true);
-				},
-			}
-		);
+		const result = await window.showQuickPick(availableOptions, {
+			onDidSelectItem: async (item) => {
+				(item as any).onSelect(true);
+			},
+		});
 		if (!result || !result.onSelect) {
 			await this.config.setTheme(originalTheme);
 			await this.config.setAppearance(originalAppearance);
@@ -378,7 +393,7 @@ export class DrawioEditor {
 }
 
 function withFirstUnique<T>(items: T[], firstItem: T): T[] {
-	const filtered = items.filter(t => t !== firstItem);
+	const filtered = items.filter((t) => t !== firstItem);
 	return [firstItem, ...filtered];
 }
 

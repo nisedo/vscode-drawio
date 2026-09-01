@@ -18,6 +18,7 @@ import {
 	VsCodeSetting,
 } from "./vscode-utils/VsCodeSetting";
 import * as packageJson from "../package.json";
+import { Disposable } from "@hediet/std/disposable";
 
 const extensionId = "hediet.vscode-drawio";
 const experimentalFeaturesEnabled = "vscode-drawio.experimentalFeaturesEnabled";
@@ -30,6 +31,8 @@ export async function setContext(
 }
 
 export class Config {
+	public readonly dispose = Disposable.fn();
+
 	public readonly packageJson: {
 		version: string;
 		versionName?: string;
@@ -59,17 +62,21 @@ export class Config {
 	}
 
 	constructor(private readonly globalState: Memento) {
-		autorun(() => {
-			setContext(
-				experimentalFeaturesEnabled,
-				this.experimentalFeaturesEnabled
-			);
+		this.dispose.track({
+			dispose: autorun(() => {
+				setContext(
+					experimentalFeaturesEnabled,
+					this.experimentalFeaturesEnabled
+				);
+			}),
 		});
 
 		this._vscodeTheme = window.activeColorTheme;
-		window.onDidChangeActiveColorTheme((theme) => {
-			this._vscodeTheme = theme;
-		});
+		this.dispose.track(
+			window.onDidChangeActiveColorTheme((theme) => {
+				this._vscodeTheme = theme;
+			})
+		);
 	}
 
 	public getDiagramConfig(uri: Uri): DiagramConfig {
@@ -364,26 +371,32 @@ export class DiagramConfig {
 		serializer: serializerWithDefault("kennedy"),
 	});
 
-	private readonly _appearance = new VsCodeSetting(`${extensionId}.appearance`, {
-		scope: this.uri,
-		serializer: serializerWithDefault<
-			"automatic" |
-			"light" |
-			"dark" |
-			"highContrastLight" |
-			"highContrast"
-		>("light"),
-	});
+	private readonly _appearance = new VsCodeSetting(
+		`${extensionId}.appearance`,
+		{
+			scope: this.uri,
+			serializer: serializerWithDefault<
+				| "automatic"
+				| "light"
+				| "dark"
+				| "highContrastLight"
+				| "highContrast"
+			>("light"),
+		}
+	);
 
 	public get resolvedTheme(): ResolvedDrawioTheme {
 		const themeName = this._theme.get().toLowerCase();
 
 		// handle 'dark' and 'automatic' for backwards compat
-		if (themeName === 'dark') {
-			return new ResolvedDrawioTheme('kennedy', ColorThemeKind.Dark);
+		if (themeName === "dark") {
+			return new ResolvedDrawioTheme("kennedy", ColorThemeKind.Dark);
 		}
-		if (themeName === 'automatic') {
-			return new ResolvedDrawioTheme('kennedy', this.config.vscodeTheme.kind);
+		if (themeName === "automatic") {
+			return new ResolvedDrawioTheme(
+				"kennedy",
+				this.config.vscodeTheme.kind
+			);
 		}
 
 		const appearance = this._appearance.get().toLowerCase();
@@ -403,8 +416,8 @@ export class DiagramConfig {
 	@computed
 	public get theme(): string {
 		const t = this._theme.get().toLowerCase();
-		if (t === 'dark' || t === 'automatic') {
-			return 'kennedy';
+		if (t === "dark" || t === "automatic") {
+			return "kennedy";
 		}
 		return t;
 	}
@@ -720,7 +733,7 @@ export class DiagramConfig {
 		public readonly uri: Uri,
 		private readonly config: Config,
 		private readonly memento: Memento
-	) { }
+	) {}
 
 	@computed
 	public get drawioLanguage(): string {
@@ -736,38 +749,35 @@ export class DiagramConfig {
 
 type DrawioCustomLibrary = (
 	| {
-		xml: string;
-	}
+			xml: string;
+	  }
 	| {
-		url: string;
-	}
+			url: string;
+	  }
 	| {
-		json: string;
-	}
+			json: string;
+	  }
 	| {
-		file: string;
-	}
+			file: string;
+	  }
 ) & { libName: string; entryId: string };
 
 export class ResolvedDrawioTheme {
 	public static getThemeNames(): string[] {
-		return [
-			"min",
-			"kennedy",
-		];
+		return ["min", "kennedy"];
 	}
 
 	constructor(
 		public readonly themeName: string,
-		public readonly appearance: ColorThemeKind,
-	) { }
+		public readonly appearance: ColorThemeKind
+	) {}
 
 	getAppearanceDrawioValue(): string {
 		return {
 			[ColorThemeKind.Light]: "0",
 			[ColorThemeKind.Dark]: "1",
 			[ColorThemeKind.HighContrastLight]: "2",
-			[ColorThemeKind.HighContrast]: "3"
+			[ColorThemeKind.HighContrast]: "3",
 		}[this.appearance];
 	}
 
@@ -788,15 +798,15 @@ function themeKindToString(themeKind: ColorThemeKind): string {
 		[ColorThemeKind.Light]: "light",
 		[ColorThemeKind.Dark]: "dark",
 		[ColorThemeKind.HighContrastLight]: "high-contrast-light",
-		[ColorThemeKind.HighContrast]: "high-contrast"
+		[ColorThemeKind.HighContrast]: "high-contrast",
 	}[themeKind];
 }
 
 function themeKindFromString(themeKind: string): ColorThemeKind | undefined {
 	return {
-		"light": ColorThemeKind.Light,
-		"dark": ColorThemeKind.Dark,
+		light: ColorThemeKind.Light,
+		dark: ColorThemeKind.Dark,
 		"high-contrast-light": ColorThemeKind.HighContrastLight,
-		"high-contrast": ColorThemeKind.HighContrast
+		"high-contrast": ColorThemeKind.HighContrast,
 	}[themeKind];
 }

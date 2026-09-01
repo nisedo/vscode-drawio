@@ -33,7 +33,7 @@ class LiveshareFeatureInitialized {
 
 	private session = fromResource(
 		(sink) => {
-			this.api.onDidChangeSession(({ session }) => {
+			return this.api.onDidChangeSession(({ session }) => {
 				sink(normalizeSession(session));
 			});
 		},
@@ -44,6 +44,7 @@ class LiveshareFeatureInitialized {
 		private readonly api: vsls.LiveShare,
 		editorManager: DrawioEditorService
 	) {
+		this.dispose.track(this.session);
 		this.dispose.track(
 			autorunTrackDisposables(async (track) => {
 				const session = this.session.current();
