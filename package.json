@@ -518,7 +518,7 @@
 		"build": "yarn build-extension && yarn build-plugins && yarn package-extension",
 		"build-extension": "webpack --mode production",
 		"build-plugins": "webpack --mode production --config ./drawio-custom-plugins/webpack.config.ts",
-		"package-extension": "yarn package-extension-preRelease",
+		"package-extension": "yarn package-extension-stable",
 		"package-extension-stable": "vsce package --yarn --out ./dist/",
 		"package-extension-preRelease": "vsce package --yarn --out ./dist/ --pre-release",
 		"dev": "webpack --mode development --watch",

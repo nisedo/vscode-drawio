@@ -8,6 +8,8 @@ import {
 } from "../src/extensionIds";
 
 interface ExtensionManifest {
+	preRelease: boolean;
+	scripts: Record<string, string>;
 	contributes: {
 		commands: { command: string; enablement?: string }[];
 		configuration: { properties: Record<string, unknown> }[];
@@ -37,5 +39,15 @@ describe("experimental text editor manifest", () => {
 		);
 
 		assert.equal(command?.enablement, experimentalFeaturesContextKey);
+	});
+});
+
+describe("extension packaging manifest", () => {
+	it("uses stable packaging when the manifest is stable", () => {
+		assert.equal(manifest.preRelease, false);
+		assert.equal(
+			manifest.scripts["package-extension"],
+			"yarn package-extension-stable"
+		);
 	});
 });
